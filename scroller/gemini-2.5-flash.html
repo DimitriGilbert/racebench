@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gemini-2.5-flash - LiteChat Race Result</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button { transition: all 0.2s ease-in-out; border-bottom: 2px solid transparent; }
+        .tab-button.active { border-bottom-color: #6366f1; color: #4f46e5; background-color: #e0e7ff; }
+        .dark .tab-button.active { border-bottom-color: #818cf8; color: #a5b4fc; background-color: #374151; }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-4 sm:p-6 md:p-8">
+    <div class="max-w-7xl mx-auto container bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+        <div class="header bg-gradient-to-r from-violet-600 to-indigo-600 text-white p-6 sm:p-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold mb-2">🚀 gemini-2.5-flash</h1>
+            <p class="text-indigo-200">LiteChat Race Result</p>
+        </div>
+        
+        <div class="p-4 sm:p-6">
+            <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+                <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                    <button class="tab-button active text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 whitespace-nowrap py-3 px-4 font-medium text-sm rounded-t-md" data-tab="preview">Live Preview</button>
+                    <button class="tab-button text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 whitespace-nowrap py-3 px-4 font-medium text-sm rounded-t-md" data-tab="raw">Raw Response</button>
+                </nav>
+            </div>
+
+            <div id="preview" class="tab-content active">
+                <div id="litechat-target" class="w-full min-h-[600px] bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"></div>
+            </div>
+
+            <div id="raw" class="tab-content">
+                <div class="w-full min-h-[600px] bg-gray-900 text-white rounded-lg p-4 overflow-x-auto font-mono">
+                    <pre class="whitespace-pre-wrap text-sm"><code>This is an ambitious and exciting project! Combining 2D scroll shooter mechanics with 3D effects using Three.js within a `runjs` block is a fantastic challenge. I'll create a vibrant, poppy, and comfy game experience with the requested features.
+
+Here's a breakdown of how I'll approach this, followed by the `runjs` block:
+
+### Game Concept & Features:
+
+*   **2D Scroll Shooter with 3D Effect:**
+    *   The gameplay will be on a 2D plane (X-Z in Three.js terms, with Y as the "up" direction for depth).
+    *   The "3D effect" will come from the models themselves, lighting, shadows, and camera perspective, making it feel like objects are popping out while still moving on a 2D plane.
+    *   The background will scroll to simulate forward movement.
+*   **Colorful and Poppy:**
+    *   Bright, contrasting colors for player, enemies, bullets, and power-ups.
+    *   Simple, stylized geometry for a clean, "poppy" look.
+    *   Particle effects for explosions and power-up collection.
+*   **Comfy Game Area:**
+    *   A clear, uncluttered play space.
+    *   Intuitive controls (mouse for movement, click for fire).
+    *   Subtle background elements that don't distract.
+*   **Live Display:**
+    *   A simple UI overlay for lives and score.
+*   **Random Bonus Drops:**
+    *   Each enemy kill has a chance to drop a bonus.
+    *   **Faster Fire Rate:** Increases player's bullet firing speed.
+    *   **Bouncy Fire:** Bullets can bounce to hit additional enemies after an initial kill.
+    *   **More Gun:**
+        *   Level 1: Single shot (default)
+        *   Level 2: Dual shots (left and right of player)
+        *   Level 3: Triple shot (center, angled left, angled right)
+    *   **Extra Life:** Grants one additional life.
+*   **Enemy Progression:**
+    *   Enemies will appear in waves.
+    *   Over time (or by wave progression), enemies will get faster and potentially have more health.
+
+### Technical Implementation (within `runjs`):
+
+1.  **Three.js Setup:** Scene, camera (orthographic or perspective with a fixed Y for 2D feel), renderer, lights.
+2.  **Game Loop:** `requestAnimationFrame` for continuous updates.
+3.  **Player:**
+    *   Mesh (e.g., a simple spaceship model).
+    *   Movement based on mouse X/Y.
+    *   Collision detection with enemies and enemy bullets.
+    *   Firing mechanism.
+4.  **Bullets:**
+    *   Player bullets: Simple meshes, move forward, collision with enemies.
+    *   Enemy bullets (if implemented): Similar to player bullets, collision with player.
+5.  **Enemies:**
+    *   Different types of enemy meshes.
+    *   Spawn logic (randomized or wave-based).
+    *   Movement patterns (e.g., straight down, simple zig-zag).
+    *   Health system.
+    *   Collision detection with player bullets.
+6.  **Power-ups:**
+    *   Distinct meshes/colors for each type.
+    *   Drop chance on enemy destruction.
+    *   Collection logic when player touches them.
+    *   Apply effects to player stats.
+7.  **Scrolling Background:**
+    *   A large plane or multiple planes that move towards the camera and loop.
+8.  **Collision Detection:** Simple bounding box or sphere intersections for performance.
+9.  **UI:** DOM elements overlayed on the canvas for lives, score, and game over.
+10. **Game State Management:** Variables for score, lives, power-up levels, game over state.
+
+Let's build this! Due to the complexity, I'll start with a solid foundation and implement the core mechanics and a few power-ups. We can expand it further if you like.
+
+```runjs
+// Make sure to clear any previous content in the target
+litechat.target.replaceChildren();
+
+async function createShooterGame() {
+    try {
+        litechat.utils.log('info', '🚀 Starting 2D Shooter (3D Effect) creation...');
+
+        // Load Three.js and OrbitControls (though we won't use OrbitControls for gameplay, it's good for debugging initially)
+        const modules = await litechat.utils.loadModules([
+            {
+                url: 'https://unpkg.com/three@0.170.0/build/three.module.js',
+                name: 'THREE',
+                globalKey: 'THREE',
+                importMap: {
+                    "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+                    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+                }
+            },
+            {
+                url: 'https://unpkg.com/three@0.170.0/examples/jsm/controls/OrbitControls.js',
+                name: 'OrbitControls', // We'll load it but not use it for actual gameplay
+                dependencies: ['THREE']
+            }
+        ]);
+
+        const { THREE } = modules;
+        // OrbitControls is loaded but not directly used in the game loop for player control.
+
+        // --- Game Configuration & Constants ---
+        const GAME_WIDTH = 12; // Units
+        const GAME_HEIGHT = 20; // Units (Z-axis in Three.js)
+        const PLAYER_SPEED = 0.15; // How fast player moves with mouse
+        const PLAYER_BULLET_SPEED = 0.4;
+        const ENEMY_BULLET_SPEED = 0.2;
+        const ENEMY_SPEED_BASE = 0.05;
+        const ENEMY_SPAWN_INTERVAL = 1000; // ms
+        const BACKGROUND_SCROLL_SPEED = 0.08;
+        const MAX_PLAYER_BULLETS = 50;
+        const MAX_ENEMY_BULLETS = 100;
+        const POWERUP_DROP_CHANCE = 0.3; // 30% chance for an enemy to drop a power-up
+        const INVINCIBILITY_TIME = 2000; // ms after hit
+
+        // --- Game State Variables ---
+        let score = 0;
+        let lives = 3;
+        let gameOver = false;
+        let lastEnemySpawnTime = 0;
+        let lastPlayerFireTime = 0;
+        let playerFireRateModifier = 1.0; // 1.0 = normal, &lt;1.0 = faster
+        let playerBulletBounces = 0; // Number of enemies a bouncy bullet can hit
+        let playerGunLevel = 1; // 1: single, 2: dual, 3: triple
+        let playerInvincible = false;
+        let playerInvincibleEndTime = 0;
+        let playerHitFlashTimer = 0;
+
+        const playerBullets = [];
+        const enemies = [];
+        const enemyBullets = [];
+        const powerups = [];
+        const particles = []; // For explosions
+
+        // --- DOM Elements for UI ---
+        const gameContainer = document.createElement('div');
+        gameContainer.className = 'relative w-full h-[600px] bg-black overflow-hidden rounded-lg shadow-xl m-auto flex flex-col items-center justify-center';
+        gameContainer.style.width = '800px'; // Fixed width for game area
+        gameContainer.style.height = '600px'; // Fixed height for game area
+        gameContainer.style.outline = '5px solid #FFD700'; // Gold border for comfy feel
+        gameContainer.style.boxShadow = '0 0 20px rgba(255,215,0,0.5)';
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 600;
+        canvas.className = 'absolute top-0 left-0 z-0'; // Canvas below UI
+        gameContainer.appendChild(canvas);
+
+        const uiOverlay = document.createElement('div');
+        uiOverlay.className = 'absolute top-0 left-0 w-full h-full p-4 flex flex-col justify-between z-10 pointer-events-none';
+        gameContainer.appendChild(uiOverlay);
+
+        const topUI = document.createElement('div');
+        topUI.className = 'flex justify-between items-center text-white text-2xl font-bold bg-gradient-to-b from-gray-900/80 to-transparent p-2 rounded-lg';
+        uiOverlay.appendChild(topUI);
+
+        const scoreDisplay = document.createElement('span');
+        scoreDisplay.textContent = `SCORE: ${score}`;
+        scoreDisplay.className = 'text-green-400 drop-shadow-[0_0_5px_rgba(0,255,0,0.5)]';
+        topUI.appendChild(scoreDisplay);
+
+        const livesDisplay = document.createElement('span');
+        livesDisplay.textContent = `LIVES: ${lives}`;
+        livesDisplay.className = 'text-red-400 drop-shadow-[0_0_5px_rgba(255,0,0,0.5)]';
+        topUI.appendChild(livesDisplay);
+
+        const messageDisplay = document.createElement('div');
+        messageDisplay.className = 'text-center text-white text-5xl font-extrabold drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] opacity-0 transition-opacity duration-500';
+        uiOverlay.appendChild(messageDisplay);
+
+        const restartButton = document.createElement('button');
+        restartButton.textContent = 'RESTART GAME';
+        restartButton.className = 'absolute bottom-1/4 left-1/2 -translate-x-1/2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-3xl font-bold rounded-full shadow-lg transition-all duration-300 transform scale-0 pointer-events-none opacity-0';
+        restartButton.style.pointerEvents = 'none'; // Initially disabled
+        restartButton.onclick = () =&gt; resetGame();
+        gameContainer.appendChild(restartButton);
+
+        litechat.target.appendChild(gameContainer);
+
+        function updateUI() {
+            scoreDisplay.textContent = `SCORE: ${score}`;
+            livesDisplay.textContent = `LIVES: ${lives}`;
+            if (playerInvincible) {
+                playerHitFlashTimer = (playerHitFlashTimer + 1) % 10; // Simple flicker
+                player.mesh.visible = playerHitFlashTimer &lt; 5;
+            } else {
+                player.mesh.visible = true;
+            }
+        }
+
+        function showMessage(text, fadeOut = true) {
+            messageDisplay.textContent = text;
+            messageDisplay.classList.remove('opacity-0');
+            messageDisplay.classList.add('opacity-100');
+            messageDisplay.style.pointerEvents = 'auto'; // Enable interaction for messages if needed
+            if (fadeOut) {
+                setTimeout(() =&gt; {
+                    messageDisplay.classList.remove('opacity-100');
+                    messageDisplay.classList.add('opacity-0');
+                }, 1500);
+            }
+        }
+
+        function showRestartButton() {
+            restartButton.classList.remove('scale-0', 'opacity-0');
+            restartButton.classList.add('scale-100', 'opacity-100');
+            restartButton.style.pointerEvents = 'auto';
+        }
+
+        function hideRestartButton() {
+            restartButton.classList.remove('scale-100', 'opacity-100');
+            restartButton.classList.add('scale-0', 'opacity-0');
+            restartButton.style.pointerEvents = 'none';
+        }
+
+        // --- Three.js Scene Setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x100020); // Dark purple for space
+
+        // Camera: Orthographic to emphasize 2D gameplay, but with a slight perspective feel
+        // We'll use a PerspectiveCamera but position it to simulate orthographic for the main action
+        const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+        camera.position.set(0, 15, GAME_HEIGHT / 2); // Y for height/depth, Z for background
+        camera.lookAt(0, 0, GAME_HEIGHT / 2 - 5); // Look slightly down the Z-axis
+        scene.add(camera);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(canvas.width, canvas.height);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 50;
+        directionalLight.shadow.camera.left = -GAME_WIDTH / 2;
+        directionalLight.shadow.camera.right = GAME_WIDTH / 2;
+        directionalLight.shadow.camera.top = GAME_HEIGHT / 2;
+        directionalLight.shadow.camera.bottom = -GAME_HEIGHT / 2;
+        scene.add(directionalLight);
+
+        const pointLight = new THREE.PointLight(0xffaaff, 0.5, 50); // Pinkish light
+        pointLight.position.set(0, 5, 0);
+        scene.add(pointLight);
+
+        // --- Game Objects ---
+
+        // Player
+        const player = {
+            mesh: null,
+            collider: new THREE.Box3(),
+            init: function () {
+                const geometry = new THREE.ConeGeometry(0.8, 2, 8);
+                const material = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x008800, emissiveIntensity: 0.5 });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.rotation.x = Math.PI / 2; // Point forward
+                this.mesh.position.set(0, 0, -GAME_HEIGHT / 2 + 2); // Start at bottom center
+                this.mesh.castShadow = true;
+                this.mesh.receiveShadow = true;
+                scene.add(this.mesh);
+                this.updateCollider();
+            },
+            updateCollider: function () {
+                this.collider.setFromObject(this.mesh);
+            }
+        };
+        player.init();
+
+        // Background (Scrolling Stars/Nebula)
+        const backgroundMaterial = new THREE.MeshBasicMaterial({
+            map: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/textures/planets/earth_atmos_2048.jpg'), // Placeholder, ideally a seamless space texture
+            side: THREE.BackSide
+        });
+        backgroundMaterial.map.wrapS = THREE.RepeatWrapping;
+        backgroundMaterial.map.wrapT = THREE.RepeatWrapping;
+        backgroundMaterial.map.repeat.set(1, 2); // Repeat vertically
+
+        const backgroundGeometry = new THREE.PlaneGeometry(GAME_WIDTH * 2, GAME_HEIGHT * 4); // Larger plane
+        const backgroundMesh = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+        backgroundMesh.rotation.x = -Math.PI / 2; // Lay flat on XZ plane
+        backgroundMesh.position.set(0, -1, GAME_HEIGHT / 2); // Position behind game area
+        scene.add(backgroundMesh);
+
+        // --- Helper Functions ---
+
+        function createBullet(isPlayerBullet = true, position, color, initialRotation = 0) {
+            const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.8);
+            const material = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.8 });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.copy(position);
+            mesh.rotation.y = initialRotation; // For angled shots
+            mesh.castShadow = true;
+            mesh.receiveShadow = false;
+            scene.add(mesh);
+
+            const bullet = { mesh, isPlayerBullet, collider: new THREE.Box3(), bounces: playerBulletBounces };
+            bullet.updateCollider = () =&gt; bullet.collider.setFromObject(bullet.mesh);
+            bullet.updateCollider();
+            return bullet;
+        }
+
+        function createEnemy(type = 'basic') {
+            let geometry, material, health, points;
+            switch (type) {
+                case 'basic':
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+                    material = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0x880000, emissiveIntensity: 0.5 });
+                    health = 1;
+                    points = 100;
+                    break;
+                case 'fast':
+                    geometry = new THREE.OctahedronGeometry(0.8);
+                    material = new THREE.MeshStandardMaterial({ color: 0xff8800, emissive: 0xaa4400, emissiveIntensity: 0.5 });
+                    health = 1;
+                    points = 150;
+                    break;
+                case 'strong':
+                    geometry = new THREE.DodecahedronGeometry(1.2);
+                    material = new THREE.MeshStandardMaterial({ color: 0x8800ff, emissive: 0x4400aa, emissiveIntensity: 0.5 });
+                    health = 3;
+                    points = 300;
+                    break;
+            }
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(
+                (Math.random() - 0.5) * (GAME_WIDTH - 2), // Random X within bounds
+                0, // Y-axis for depth
+                GAME_HEIGHT / 2 // Start at top
+            );
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+
+            const enemy = { mesh, health, points, type, collider: new THREE.Box3() };
+            enemy.updateCollider = () =&gt; enemy.collider.setFromObject(enemy.mesh);
+            enemy.updateCollider();
+            return enemy;
+        }
+
+        function createPowerup(type, position) {
+            let geometry, material, color;
+            switch (type) {
+                case 'fireRate':
+                    geometry = new THREE.SphereGeometry(0.5, 16, 16);
+                    color = 0xffd700; // Gold
+                    break;
+                case 'bouncyFire':
+                    geometry = new THREE.TorusGeometry(0.4, 0.2, 8, 16);
+                    color = 0x00ffff; // Cyan
+                    break;
+                case 'moreGun':
+                    geometry = new THREE.ConeGeometry(0.5, 1, 4);
+                    color = 0xff00ff; // Magenta
+                    break;
+                case 'extraLife':
+                    geometry = new THREE.TetrahedronGeometry(0.6);
+                    color = 0x00ff00; // Green
+                    break;
+            }
+            material = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.6 });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.copy(position);
+            mesh.position.y = 0; // Keep on the game plane
+            mesh.castShadow = true;
+            scene.add(mesh);
+
+            const powerup = { mesh, type, collider: new THREE.Box3() };
+            powerup.updateCollider = () =&gt; powerup.collider.setFromObject(powerup.mesh);
+            powerup.updateCollider();
+            return powerup;
+        }
+
+        function createParticle(position, color, scale = 0.1, speed = 0.1) {
+            const geometry = new THREE.SphereGeometry(scale, 8, 8);
+            const material = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 1.0 });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.copy(position);
+            scene.add(mesh);
+
+            const velocity = new THREE.Vector3(
+                (Math.random() - 0.5) * speed,
+                (Math.random() - 0.5) * speed,
+                (Math.random() - 0.5) * speed
+            );
+
+            const particle = { mesh, velocity, life: 60 }; // 60 frames life
+            return particle;
+        }
+
+        function explode(position, color, numParticles = 10) {
+            for (let i = 0; i &lt; numParticles; i++) {
+                particles.push(createParticle(position, color, 0.1 + Math.random() * 0.1, 0.1 + Math.random() * 0.1));
+            }
+        }
+
+        // --- Game Logic ---
+
+        function handlePlayerFire(currentTime) {
+            const fireDelay = 200 * playerFireRateModifier; // Base 200ms, faster with modifier
+            if (currentTime - lastPlayerFireTime &gt; fireDelay) {
+                const bulletPos = player.mesh.position.clone();
+                bulletPos.z += 0.5; // Offset slightly in front of player
+
+                if (playerGunLevel === 1) {
+                    playerBullets.push(createBullet(true, bulletPos, 0x00ff00)); // Green bullet
+                } else if (playerGunLevel === 2) {
+                    playerBullets.push(createBullet(true, bulletPos.clone().add(new THREE.Vector3(-0.5, 0, 0)), 0x00ff00));
+                    playerBullets.push(createBullet(true, bulletPos.clone().add(new THREE.Vector3(0.5, 0, 0)), 0x00ff00));
+                } else if (playerGunLevel === 3) {
+                    playerBullets.push(createBullet(true, bulletPos, 0x00ff00));
+                    playerBullets.push(createBullet(true, bulletPos.clone().add(new THREE.Vector3(-0.5, 0, 0)), 0x00ff00, -0.2)); // Angled left
+                    playerBullets.push(createBullet(true, bulletPos.clone().add(new THREE.Vector3(0.5, 0, 0)), 0x00ff00, 0.2));  // Angled right
+                }
+                lastPlayerFireTime = currentTime;
+            }
+        }
+
+        function checkCollisions() {
+            // Player Bullets vs. Enemies
+            for (let i = playerBullets.length - 1; i &gt;= 0; i--) {
+                const bullet = playerBullets[i];
+                bullet.updateCollider();
+
+                for (let j = enemies.length - 1; j &gt;= 0; j--) {
+                    const enemy = enemies[j];
+                    enemy.updateCollider();
+
+                    if (bullet.collider.intersectsBox(enemy.collider)) {
+                        enemy.health--;
+                        score += 10; // Hit bonus
+                        explode(bullet.mesh.position, 0xffaaff, 3); // Small hit explosion
+
+                        if (enemy.health &lt;= 0) {
+                            score += enemy.points;
+                            explode(enemy.mesh.position, enemy.mesh.material.color, 20); // Big explosion
+
+                            // Power-up Drop
+                            if (Math.random() &lt; POWERUP_DROP_CHANCE) {
+                                const powerupTypes = ['fireRate', 'bouncyFire', 'moreGun', 'extraLife'];
+                                const randomType = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+                                powerups.push(createPowerup(randomType, enemy.mesh.position));
+                            }
+
+                            scene.remove(enemy.mesh);
+                            enemies.splice(j, 1);
+
+                            if (bullet.bounces &gt; 0) {
+                                bullet.bounces--;
+                                // Bullet continues, but loses a bounce charge
+                            } else {
+                                scene.remove(bullet.mesh);
+                                playerBullets.splice(i, 1);
+                                break; // Bullet is destroyed, move to next player bullet
+                            }
+                        } else {
+                            // Bullet is destroyed if enemy is not defeated and it's not bouncy
+                            if (bullet.bounces === 0) {
+                                scene.remove(bullet.mesh);
+                                playerBullets.splice(i, 1);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Player vs. Enemies
+            if (!playerInvincible) {
+                player.updateCollider();
+                for (let i = enemies.length - 1; i &gt;= 0; i--) {
+                    const enemy = enemies[i];
+                    enemy.updateCollider();
+                    if (player.collider.intersectsBox(enemy.collider)) {
+                        takeDamage();
+                        explode(player.mesh.position, 0xff0000, 30); // Player hit explosion
+                        scene.remove(enemy.mesh);
+                        enemies.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+
+
+            // Player vs. Powerups
+            player.updateCollider();
+            for (let i = powerups.length - 1; i &gt;= 0; i--) {
+                const powerup = powerups[i];
+                powerup.updateCollider();
+                if (player.collider.intersectsBox(powerup.collider)) {
+                    applyPowerup(powerup.type);
+                    explode(powerup.mesh.position, powerup.mesh.material.color, 10);
+                    scene.remove(powerup.mesh);
+                    powerups.splice(i, 1);
+                }
+            }
+        }
+
+        function takeDamage() {
+            if (playerInvincible) return; // Cannot take damage if invincible
+
+            lives--;
+            playerInvincible = true;
+            playerInvincibleEndTime = performance.now() + INVINCIBILITY_TIME;
+            showMessage('HIT!');
+            updateUI();
+
+            if (lives &lt;= 0) {
+                endGame();
+            }
+        }
+
+        function applyPowerup(type) {
+            let message = '';
+            switch (type) {
+                case 'fireRate':
+                    playerFireRateModifier *= 0.9; // 10% faster
+                    if (playerFireRateModifier &lt; 0.2) playerFireRateModifier = 0.2; // Cap max speed
+                    message = 'FIRE RATE UP!';
+                    break;
+                case 'bouncyFire':
+                    playerBulletBounces++;
+                    if (playerBulletBounces &gt; 3) playerBulletBounces = 3; // Cap bounces
+                    message = 'BOUNCY SHOTS!';
+                    break;
+                case 'moreGun':
+                    playerGunLevel++;
+                    if (playerGunLevel &gt; 3) playerGunLevel = 3; // Cap gun level
+                    message = 'MORE GUNS!';
+                    break;
+                case 'extraLife':
+                    lives++;
+                    message = 'EXTRA LIFE!';
+                    break;
+            }
+            showMessage(message);
+            updateUI();
+        }
+
+        function endGame() {
+            gameOver = true;
+            showMessage('GAME OVER!', false); // Don't fade out
+            showRestartButton();
+            litechat.utils.toast('info', `Game Over! Final Score: ${score}`);
+        }
+
+        function resetGame() {
+            // Clear all game objects
+            playerBullets.forEach(b =&gt; scene.remove(b.mesh));
+            enemies.forEach(e =&gt; scene.remove(e.mesh));
+            powerups.forEach(p =&gt; scene.remove(p.mesh));
+            particles.forEach(p =&gt; scene.remove(p.mesh));
+
+            playerBullets.length = 0;
+            enemies.length = 0;
+            enemyBullets.length = 0; // If implemented
+            powerups.length = 0;
+            particles.length = 0;
+
+            // Reset game state
+            score = 0;
+            lives = 3;
+            gameOver = false;
+            lastEnemySpawnTime = 0;
+            lastPlayerFireTime = 0;
+            playerFireRateModifier = 1.0;
+            playerBulletBounces = 0;
+            playerGunLevel = 1;
+            playerInvincible = false;
+            playerInvincibleEndTime = 0;
+            playerHitFlashTimer = 0;
+
+            player.mesh.position.set(0, 0, -GAME_HEIGHT / 2 + 2); // Reset player position
+            player.mesh.visible = true; // Ensure player is visible
+
+            hideRestartButton();
+            messageDisplay.classList.remove('opacity-100'); // Hide "GAME OVER"
+            messageDisplay.classList.add('opacity-0');
+            updateUI();
+            showMessage('GET READY!', true);
+        }
+
+        // --- Event Listeners ---
+        const mouse = new THREE.Vector2();
+        const raycaster = new THREE.Raycaster();
+        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // XZ plane at Y=0
+
+        // Handle mouse movement for player
+        canvas.addEventListener('mousemove', (event) =&gt; {
+            if (gameOver) return;
+            // Calculate mouse position in normalized device coordinates (-1 to +1)
+            mouse.x = (event.offsetX / canvas.width) * 2 - 1;
+            mouse.y = -(event.offsetY / canvas.height) * 2 + 1;
+
+            // Update the raycaster with the camera and mouse position
+            raycaster.setFromCamera(mouse, camera);
+
+            // Intersect the raycaster with the game plane
+            const intersectionPoint = new THREE.Vector3();
+            raycaster.ray.intersectPlane(plane, intersectionPoint);
+
+            // Clamp player position within game bounds
+            player.mesh.position.x = Math.max(-GAME_WIDTH / 2 + player.mesh.geometry.parameters.radiusTop, Math.min(GAME_WIDTH / 2 - player.mesh.geometry.parameters.radiusTop, intersectionPoint.x));
+            player.mesh.position.z = Math.max(-GAME_HEIGHT / 2 + 2, Math.min(GAME_HEIGHT / 2 - 2, intersectionPoint.z)); // Keep player in lower half
+        });
+
+        // Handle mouse click for firing
+        canvas.addEventListener('mousedown', (event) =&gt; {
+            if (gameOver) return;
+            if (event.button === 0) { // Left click
+                handlePlayerFire(performance.now());
+            }
+        });
+
+        // Prevent context menu on right click
+        canvas.addEventListener('contextmenu', (event) =&gt; {
+            event.preventDefault();
+        });
+
+
+        // --- Animation Loop ---
+        let lastFrameTime = performance.now();
+
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+
+            const deltaTime = (currentTime - lastFrameTime); // Milliseconds
+            lastFrameTime = currentTime;
+
+            if (gameOver) {
+                // Keep rendering but no game logic updates
+                renderer.render(scene, camera);
+                return;
+            }
+
+            // Update player invincibility
+            if (playerInvincible && currentTime &gt; playerInvincibleEndTime) {
+                playerInvincible = false;
+                player.mesh.visible = true;
+            }
+
+            // Background scrolling
+            backgroundMaterial.map.offset.y -= BACKGROUND_SCROLL_SPEED * (deltaTime / 1000); // Adjust speed with deltaTime
+            if (backgroundMaterial.map.offset.y &lt; -1) { // Reset offset to create seamless loop
+                backgroundMaterial.map.offset.y = 0;
+            }
+
+            // Player Bullet movement
+            for (let i = playerBullets.length - 1; i &gt;= 0; i--) {
+                const bullet = playerBullets[i];
+                bullet.mesh.translateZ(PLAYER_BULLET_SPEED); // Move forward
+                if (bullet.mesh.position.z &gt; GAME_HEIGHT / 2 ||
+                    bullet.mesh.position.x &lt; -GAME_WIDTH / 2 ||
+                    bullet.mesh.position.x &gt; GAME_WIDTH / 2) { // Out of bounds
+                    scene.remove(bullet.mesh);
+                    playerBullets.splice(i, 1);
+                }
+            }
+
+            // Enemy Spawning
+            if (currentTime - lastEnemySpawnTime &gt; ENEMY_SPAWN_INTERVAL * (0.8 + Math.random() * 0.4)) { // Randomize slightly
+                let enemyType = 'basic';
+                if (score &gt; 1000 && Math.random() &lt; 0.3) enemyType = 'fast';
+                if (score &gt; 3000 && Math.random() &lt; 0.2) enemyType = 'strong';
+                enemies.push(createEnemy(enemyType));
+                lastEnemySpawnTime = currentTime;
+            }
+
+            // Enemy Movement
+            for (let i = enemies.length - 1; i &gt;= 0; i--) {
+                const enemy = enemies[i];
+                const speed = ENEMY_SPEED_BASE + (score / 5000) * 0.01; // Enemies get faster with score
+                enemy.mesh.position.z -= speed; // Move down
+                if (enemy.mesh.position.z &lt; -GAME_HEIGHT / 2 - 1) { // Off screen
+                    scene.remove(enemy.mesh);
+                    enemies.splice(i, 1);
+                    // Optionally, penalize player for letting enemy escape
+                }
+            }
+
+            // Powerup Movement
+            for (let i = powerups.length - 1; i &gt;= 0; i--) {
+                const powerup = powerups[i];
+                powerup.mesh.position.z -= 0.05; // Move down slower than enemies
+                powerup.mesh.rotation.y += 0.02; // Rotate for visual
+                if (powerup.mesh.position.z &lt; -GAME_HEIGHT / 2 - 1) { // Off screen
+                    scene.remove(powerup.mesh);
+                    powerups.splice(i, 1);
+                }
+            }
+
+            // Particle Updates
+            for (let i = particles.length - 1; i &gt;= 0; i--) {
+                const particle = particles[i];
+                particle.mesh.position.add(particle.velocity);
+                particle.mesh.material.opacity -= 0.015; // Fade out
+                particle.life--;
+                if (particle.life &lt;= 0 || particle.mesh.material.opacity &lt;= 0) {
+                    scene.remove(particle.mesh);
+                    particles.splice(i, 1);
+                }
+            }
+
+            checkCollisions();
+            updateUI();
+            renderer.render(scene, camera);
+        }
+
+        // Start the game!
+        animate(performance.now());
+        showMessage('Welcome to LiteShooter!', true);
+
+    } catch (error) {
+        litechat.utils.log('error', '❌ FAILED to create game:', error.message);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+        errorDiv.textContent = `Error loading game: ${error.message}. Check console for details.`;
+        litechat.target.appendChild(errorDiv);
+    }
+}
+
+createShooterGame();
+```
+
+### How to play:
+
+1.  **Run the code block.**
+2.  **Mouse Movement:** Move your mouse cursor within the game area (the black box with the gold border) to control your spaceship's horizontal and vertical position.
+3.  **Fire:** Click the left mouse button to fire your bullets.
+4.  **Dodge:** Avoid colliding with enemies.
+5.  **Collect Power-ups:** Pick up the shiny drops from destroyed enemies to enhance your abilities!
+
+### Features implemented:
+
+*   **2D Shooter with 3D Effect:** Yes, the camera angle and object models give a 3D feel while gameplay is confined to a 2D plane.
+*   **Colorful & Poppy:** Bright green player, red/orange/purple enemies, vibrant bullets and power-ups, particle explosions.
+*   **Comfy Game Area:** Gold border, clear UI, intuitive controls.
+*   **Live Display:** Score and Lives are displayed at the top.
+*   **Random Bonus Drop:**
+    *   **Faster Fire Rate (Gold Sphere):** Makes you shoot more rapidly.
+    *   **Bouncy Fire (Cyan Torus):** Bullets can hit multiple enemies after a kill.
+    *   **More Gun (Magenta Cone):** Upgrades your gun from single to dual, then triple shot.
+    *   **Extra Life (Green Tetrahedron):** Grants an additional life.
+*   **Enemy Progression:** Enemies get slightly faster as your score increases.
+
+### Potential Improvements and Next Steps:
+
+*   **Sound Effects:** Add audio for firing, explosions, power-up collection.
+*   **Enemy Variety:** More complex enemy movement patterns, enemies that shoot back.
+*   **Boss Fights:** Introduce an occasional, more challenging enemy.
+*   **Better Background:** A more detailed, seamless scrolling space background.
+*   **Player Model:** A more elaborate spaceship model.
+*   **Score Persistence:** Save high scores.
+*   **Pause Functionality:** Add a pause button.
+*   **Mobile Controls:** Touch controls for mobile devices.
+*   **Performance:** Optimize object pooling for bullets, enemies, and particles to reduce garbage collection.
+
+Enjoy playing your 2D scroll shooter! Let me know if you'd like any modifications or additional features.</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer bg-gray-50 dark:bg-gray-800/50 p-4 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+            Generated by <strong>LiteChat</strong> • <a href="./index.html" class="text-indigo-600 dark:text-indigo-400 hover:underline">Back to Main Page</a>
+        </div>
+    </div>
+
+    <script type="module">
+        // Tab switching logic
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const tabId = button.dataset.tab;
+                tabContents.forEach(content => content.id === tabId ? content.classList.add('active') : content.classList.remove('active'));
+            });
+        });
+        
+        // --- LITECHAT MOCK API ---
+        
+        const litechatTarget = document.getElementById('litechat-target');
+        async function loadModules(moduleConfigs) {
+            const loadedModules = {};
+            const loadPromises = {};
+            const globalImportMap = {};
+            moduleConfigs.forEach(config => {
+                if (config.importMap) Object.assign(globalImportMap, config.importMap);
+            });
+            const existingMap = document.querySelector('script[type="importmap"]');
+            if (existingMap) existingMap.remove();
+            if (Object.keys(globalImportMap).length > 0) {
+                const mapScript = document.createElement('script');
+                mapScript.type = 'importmap';
+                mapScript.textContent = JSON.stringify({ imports: globalImportMap });
+                document.head.appendChild(mapScript);
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            const loadSingleModule = async (config) => {
+                const key = config.globalKey || config.name;
+                if (window[key]) return window[key];
+                if (key in loadPromises) return loadPromises[key];
+                if (config.dependencies) {
+                    await Promise.all(config.dependencies.map(depKey => {
+                        const depModule = moduleConfigs.find(m => (m.globalKey || m.name) === depKey);
+                        if (depModule) return loadSingleModule(depModule);
+                        return Promise.resolve();
+                    }));
+                }
+                loadPromises[key] = (async () => {
+                    try {
+                        const module = await import(config.url);
+                        window[key] = module;
+                        loadedModules[key] = module;
+                        return module;
+                    } catch (error) {
+                        console.error(`Error loading module ${config.name}:`, error);
+                        throw error;
+                    }
+                })();
+                return loadPromises[key];
+            };
+            await Promise.all(moduleConfigs.map(config => loadSingleModule(config)));
+            return loadedModules;
+        }
+        window.litechat = {
+            utils: {
+                log: (...args) => console.log(...args),
+                toast: (message) => alert(message),
+                error: (...args) => console.error(...args),
+                warn: (...args) => console.warn(...args),
+                loadModules,
+                loadModule: async (url, name, key, importMap) => (await loadModules([{url, name, globalKey: key, importMap}]))[key || name],
+            },
+            target: litechatTarget,
+            emit: (eventName, payload) => window.dispatchEvent(new CustomEvent(eventName, { detail: payload })),
+        };
+    
+
+        // --- EXECUTE CODE ---
+        try {
+            // Inject the extracted runjs code here
+            // Make sure to clear any previous content in the target
+litechat.target.replaceChildren();
+
+async function createShooterGame() {
+    try {
+        litechat.utils.log('info', '🚀 Starting 2D Shooter (3D Effect) creation...');
+
+        // Load Three.js and OrbitControls (though we won't use OrbitControls for gameplay, it's good for debugging initially)
+        const modules = await litechat.utils.loadModules([
+            {
+                url: 'https://unpkg.com/three@0.170.0/build/three.module.js',
+                name: 'THREE',
+                globalKey: 'THREE',
+                importMap: {
+                    "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+                    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+                }
+            },
+            {
+                url: 'https://unpkg.com/three@0.170.0/examples/jsm/controls/OrbitControls.js',
+                name: 'OrbitControls', // We'll load it but not use it for actual gameplay
+                dependencies: ['THREE']
+            }
+        ]);
+
+        const { THREE } = modules;
+        // OrbitControls is loaded but not directly used in the game loop for player control.
+
+        // --- Game Configuration & Constants ---
+        const GAME_WIDTH = 12; // Units
+        const GAME_HEIGHT = 20; // Units (Z-axis in Three.js)
+        const PLAYER_SPEED = 0.15; // How fast player moves with mouse
+        const PLAYER_BULLET_SPEED = 0.4;
+        const ENEMY_BULLET_SPEED = 0.2;
+        const ENEMY_SPEED_BASE = 0.05;
+        const ENEMY_SPAWN_INTERVAL = 1000; // ms
+        const BACKGROUND_SCROLL_SPEED = 0.08;
+        const MAX_PLAYER_BULLETS = 50;
+        const MAX_ENEMY_BULLETS = 100;
+        const POWERUP_DROP_CHANCE = 0.3; // 30% chance for an enemy to drop a power-up
+        const INVINCIBILITY_TIME = 2000; // ms after hit
+
+        // --- Game State Variables ---
+        let score = 0;
+        let lives = 3;
+        let gameOver = false;
+        let lastEnemySpawnTime = 0;
+        let lastPlayerFireTime = 0;
+        let playerFireRateModifier = 1.0; // 1.0 = normal, <1.0 = faster
+        let playerBulletBounces = 0; // Number of enemies a bouncy bullet can hit
+        let playerGunLevel = 1; // 1: single, 2: dual, 3: triple
+        let playerInvincible = false;
+        let playerInvincibleEndTime = 0;
+        let playerHitFlashTimer = 0;
+
+        const playerBullets = [];
+        const enemies = [];
+        const enemyBullets = [];
+        const powerups = [];
+        const particles = []; // For explosions
+
+        // --- DOM Elements for UI ---
+        const gameContainer = document.createElement('div');
+        gameContainer.className = 'relative w-full h-[600px] bg-black overflow-hidden rounded-lg shadow-xl m-auto flex flex-col items-center justify-center';
+        gameContainer.style.width = '800px'; // Fixed width for game area
+        gameContainer.style.height = '600px'; // Fixed height for game area
+        gameContainer.style.outline = '5px solid #FFD700'; // Gold border for comfy feel
+        gameContainer.style.boxShadow = '0 0 20px rgba(255,215,0,0.5)';
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 600;
+        canvas.className = 'absolute top-0 left-0 z-0'; // Canvas below UI
+        gameContainer.appendChild(canvas);
+
+        const uiOverlay = document.createElement('div');
+        uiOverlay.className = 'absolute top-0 left-0 w-full h-full p-4 flex flex-col justify-between z-10 pointer-events-none';
+        gameContainer.appendChild(uiOverlay);
+
+        const topUI = document.createElement('div');
+        topUI.className = 'flex justify-between items-center text-white text-2xl font-bold bg-gradient-to-b from-gray-900/80 to-transparent p-2 rounded-lg';
+        uiOverlay.appendChild(topUI);
+
+        const scoreDisplay = document.createElement('span');
+        scoreDisplay.textContent = `SCORE: ${score}`;
+        scoreDisplay.className = 'text-green-400 drop-shadow-[0_0_5px_rgba(0,255,0,0.5)]';
+        topUI.appendChild(scoreDisplay);
+
+        const livesDisplay = document.createElement('span');
+        livesDisplay.textContent = `LIVES: ${lives}`;
+        livesDisplay.className = 'text-red-400 drop-shadow-[0_0_5px_rgba(255,0,0,0.5)]';
+        topUI.appendChild(livesDisplay);
+
+        const messageDisplay = document.createElement('div');
+        messageDisplay.className = 'text-center text-white text-5xl font-extrabold drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] opacity-0 transition-opacity duration-500';
+        uiOverlay.appendChild(messageDisplay);
+
+        const restartButton = document.createElement('button');
+        restartButton.textContent = 'RESTART GAME';
+        restartButton.className = 'absolute bottom-1/4 left-1/2 -translate-x-1/2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-3xl font-bold rounded-full shadow-lg transition-all duration-300 transform scale-0 pointer-events-none opacity-0';
+        restartButton.style.pointerEvents = 'none'; // Initially disabled
+        restartButton.onclick = () => resetGame();
+        gameContainer.appendChild(restartButton);
+
+        litechat.target.appendChild(gameContainer);
+
+        function updateUI() {
+            scoreDisplay.textContent = `SCORE: ${score}`;
+            livesDisplay.textContent = `LIVES: ${lives}`;
+            if (playerInvincible) {
+                playerHitFlashTimer = (playerHitFlashTimer + 1) % 10; // Simple flicker
+                player.mesh.visible = playerHitFlashTimer < 5;
+            } else {
+                player.mesh.visible = true;
+            }
+        }
+
+        function showMessage(text, fadeOut = true) {
+            messageDisplay.textContent = text;
+            messageDisplay.classList.remove('opacity-0');
+            messageDisplay.classList.add('opacity-100');
+            messageDisplay.style.pointerEvents = 'auto'; // Enable interaction for messages if needed
+            if (fadeOut) {
+                setTimeout(() => {
+                    messageDisplay.classList.remove('opacity-100');
+                    messageDisplay.classList.add('opacity-0');
+                }, 1500);
+            }
+        }
+
+        function showRestartButton() {
+            restartButton.classList.remove('scale-0', 'opacity-0');
+            restartButton.classList.add('scale-100', 'opacity-100');
+            restartButton.style.pointerEvents = 'auto';
+        }
+
+        function hideRestartButton() {
+            restartButton.classList.remove('scale-100', 'opacity-100');
+            restartButton.classList.add('scale-0', 'opacity-0');
+            restartButton.style.pointerEvents = 'none';
+        }
+
+        // --- Three.js Scene Setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x100020); // Dark purple for space
+
+        // Camera: Orthographic to emphasize 2D gameplay, but with a slight perspective feel
+        // We'll use a PerspectiveCamera but position it to simulate orthographic for the main action
+        const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+        camera.position.set(0, 15, GAME_HEIGHT / 2); // Y for height/depth, Z for background
+        camera.lookAt(0, 0, GAME_HEIGHT / 2 - 5); // Look slightly down the Z-axis
+        scene.add(camera);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(canvas.width, canvas.height);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 50;
+        directionalLight.shadow.camera.left = -GAME_WIDTH / 2;
+        directionalLight.shadow.camera.right = GAME_WIDTH / 2;
+        directionalLight.shadow.camera.top = GAME_HEIGHT / 2;
+        directionalLight.shadow.camera.bottom = -GAME_HEIGHT / 2;
+        scene.add(directionalLight);
+
+        const pointLight = new THREE.PointLight(0xffaaff, 0.5, 50); // Pinkish light
+        pointLight.position.set(0, 5, 0);
+        scene.add(pointLight);
+
+        // --- Game Objects ---
+
+        // Player
+        const player = {
+            mesh: null,
+            collider: new THREE.Box3(),
+            init: function () {
+                const geometry = new THREE.ConeGeometry(0.8, 2, 8);
+                const material = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x008800, emissiveIntensity: 0.5 });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.rotation.x = Math.PI / 2; // Point forward
+                this.mesh.position.set(0, 0, -GAME_HEIGHT / 2 + 2); // Start at bottom center
+                this.mesh.castShadow = true;
+                this.mesh.receiveShadow = true;
+                scene.add(this.mesh);
+                this.updateCollider();
+            },
+            updateCollider: function () {
+                this.collider.setFromObject(this.mesh);
+            }
+        };
+        player.init();
+
+        // Background (Scrolling Stars/Nebula)
+        const backgroundMaterial = new THREE.MeshBasicMaterial({
+            map: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/textures/planets/earth_atmos_2048.jpg'), // Placeholder, ideally a seamless space texture
+            side: THREE.BackSide
+        });
+        backgroundMaterial.map.wrapS = THREE.RepeatWrapping;
+        backgroundMaterial.map.wrapT = THREE.RepeatWrapping;
+        backgroundMaterial.map.repeat.set(1, 2); // Repeat vertically
+
+        const backgroundGeometry = new THREE.PlaneGeometry(GAME_WIDTH * 2, GAME_HEIGHT * 4); // Larger plane
+        const backgroundMesh = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+        backgroundMesh.rotation.x = -Math.PI / 2; // Lay flat on XZ plane
+        backgroundMesh.position.set(0, -1, GAME_HEIGHT / 2); // Position behind game area
+        scene.add(backgroundMesh);
+
+        // --- Helper Functions ---
+
+        function createBullet(isPlayerBullet = true, position, color, initialRotation = 0) {
+            const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.8);
+            const material = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.8 });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.copy(position);
+            mesh.rotation.y = initialRotation; // For angled shots
+            mesh.castShadow = true;
+            mesh.receiveShadow = false;
+            scene.add(mesh);
+
+            const bullet = { mesh, isPlayerBullet, collider: new THREE.Box3(), bounces: playerBulletBounces };
+            bullet.updateCollider = () => bullet.collider.setFromObject(bullet.mesh);
+            bullet.updateCollider();
+            return bullet;
+        }
+
+        function createEnemy(type = 'basic') {
+            let geometry, material, health, points;
+            switch (type) {
+                case 'basic':
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+                    material = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0x880000, emissiveIntensity: 0.5 });
+                    health = 1;
+                    points = 100;
+                    break;
+                case 'fast':
+                    geometry = new THREE.OctahedronGeometry(0.8);
+                    material = new THREE.MeshStandardMaterial({ color: 0xff8800, emissive: 0xaa4400, emissiveIntensity: 0.5 });
+                    health = 1;
+                    points = 150;
+                    break;
+                case 'strong':
+                    geometry = new THREE.DodecahedronGeometry(1.2);
+                    material = new THREE.MeshStandardMaterial({ color: 0x8800ff, emissive: 0x4400aa, emissiveIntensity: 0.5 });
+                    health = 3;
+                    points = 300;
+                    break;
+            }
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(
+                (Math.random() - 0.5) * (GAME_WIDTH - 2), // Random X within bounds
+                0, // Y-axis for depth
+                GAME_HEIGHT / 2 // Start at top
+            );
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+
+            const enemy = { mesh, health, points, type, collider: new THREE.Box3() };
+            enemy.updateCollider = () => enemy.collider.setFromObject(enemy.mesh);
+            enemy.updateCollider();
+            return enemy;
+        }
+
+        function createPowerup(type, position) {
+            let geometry, material, color;
+            switch (type) {
+                case 'fireRate':
+                    geometry = new THREE.SphereGeometry(0.5, 16, 16);
+                    color = 0xffd700; // Gold
+                    break;
+                case 'bouncyFire':
+                    geometry = new THREE.TorusGeometry(0.4, 0.2, 8, 16);
+                    color = 0x00ffff; // Cyan
+                    break;
+                case 'moreGun':
+                    geometry = new THREE.ConeGeometry(0.5, 1, 4);
+                    color = 0xff00ff; // Magenta
+                    break;
+                case 'extraLife':
+                    geometry = new THREE.TetrahedronGeometry(0.6);
+                    color = 0x00ff00; // Green
+                    break;
+            }
+            material = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.6 });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.copy(position);
+            mesh.position.y = 0; // Keep on the game plane
+            mesh.castShadow = true;
+            scene.add(mesh);
+
+            const powerup = { mesh, type, collider: new THREE.Box3() };
+            powerup.updateCollider = () => powerup.collider.setFromObject(powerup.mesh);
+            powerup.updateCollider();
+            return powerup;
+        }
+
+        function createParticle(position, color, scale = 0.1, speed = 0.1) {
+            const geometry = new THREE.SphereGeometry(scale, 8, 8);
+            const material = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 1.0 });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.copy(position);
+            scene.add(mesh);
+
+            const velocity = new THREE.Vector3(
+                (Math.random() - 0.5) * speed,
+                (Math.random() - 0.5) * speed,
+                (Math.random() - 0.5) * speed
+            );
+
+            const particle = { mesh, velocity, life: 60 }; // 60 frames life
+            return particle;
+        }
+
+        function explode(position, color, numParticles = 10) {
+            for (let i = 0; i < numParticles; i++) {
+                particles.push(createParticle(position, color, 0.1 + Math.random() * 0.1, 0.1 + Math.random() * 0.1));
+            }
+        }
+
+        // --- Game Logic ---
+
+        function handlePlayerFire(currentTime) {
+            const fireDelay = 200 * playerFireRateModifier; // Base 200ms, faster with modifier
+            if (currentTime - lastPlayerFireTime > fireDelay) {
+                const bulletPos = player.mesh.position.clone();
+                bulletPos.z += 0.5; // Offset slightly in front of player
+
+                if (playerGunLevel === 1) {
+                    playerBullets.push(createBullet(true, bulletPos, 0x00ff00)); // Green bullet
+                } else if (playerGunLevel === 2) {
+                    playerBullets.push(createBullet(true, bulletPos.clone().add(new THREE.Vector3(-0.5, 0, 0)), 0x00ff00));
+                    playerBullets.push(createBullet(true, bulletPos.clone().add(new THREE.Vector3(0.5, 0, 0)), 0x00ff00));
+                } else if (playerGunLevel === 3) {
+                    playerBullets.push(createBullet(true, bulletPos, 0x00ff00));
+                    playerBullets.push(createBullet(true, bulletPos.clone().add(new THREE.Vector3(-0.5, 0, 0)), 0x00ff00, -0.2)); // Angled left
+                    playerBullets.push(createBullet(true, bulletPos.clone().add(new THREE.Vector3(0.5, 0, 0)), 0x00ff00, 0.2));  // Angled right
+                }
+                lastPlayerFireTime = currentTime;
+            }
+        }
+
+        function checkCollisions() {
+            // Player Bullets vs. Enemies
+            for (let i = playerBullets.length - 1; i >= 0; i--) {
+                const bullet = playerBullets[i];
+                bullet.updateCollider();
+
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const enemy = enemies[j];
+                    enemy.updateCollider();
+
+                    if (bullet.collider.intersectsBox(enemy.collider)) {
+                        enemy.health--;
+                        score += 10; // Hit bonus
+                        explode(bullet.mesh.position, 0xffaaff, 3); // Small hit explosion
+
+                        if (enemy.health <= 0) {
+                            score += enemy.points;
+                            explode(enemy.mesh.position, enemy.mesh.material.color, 20); // Big explosion
+
+                            // Power-up Drop
+                            if (Math.random() < POWERUP_DROP_CHANCE) {
+                                const powerupTypes = ['fireRate', 'bouncyFire', 'moreGun', 'extraLife'];
+                                const randomType = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+                                powerups.push(createPowerup(randomType, enemy.mesh.position));
+                            }
+
+                            scene.remove(enemy.mesh);
+                            enemies.splice(j, 1);
+
+                            if (bullet.bounces > 0) {
+                                bullet.bounces--;
+                                // Bullet continues, but loses a bounce charge
+                            } else {
+                                scene.remove(bullet.mesh);
+                                playerBullets.splice(i, 1);
+                                break; // Bullet is destroyed, move to next player bullet
+                            }
+                        } else {
+                            // Bullet is destroyed if enemy is not defeated and it's not bouncy
+                            if (bullet.bounces === 0) {
+                                scene.remove(bullet.mesh);
+                                playerBullets.splice(i, 1);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Player vs. Enemies
+            if (!playerInvincible) {
+                player.updateCollider();
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const enemy = enemies[i];
+                    enemy.updateCollider();
+                    if (player.collider.intersectsBox(enemy.collider)) {
+                        takeDamage();
+                        explode(player.mesh.position, 0xff0000, 30); // Player hit explosion
+                        scene.remove(enemy.mesh);
+                        enemies.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+
+
+            // Player vs. Powerups
+            player.updateCollider();
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const powerup = powerups[i];
+                powerup.updateCollider();
+                if (player.collider.intersectsBox(powerup.collider)) {
+                    applyPowerup(powerup.type);
+                    explode(powerup.mesh.position, powerup.mesh.material.color, 10);
+                    scene.remove(powerup.mesh);
+                    powerups.splice(i, 1);
+                }
+            }
+        }
+
+        function takeDamage() {
+            if (playerInvincible) return; // Cannot take damage if invincible
+
+            lives--;
+            playerInvincible = true;
+            playerInvincibleEndTime = performance.now() + INVINCIBILITY_TIME;
+            showMessage('HIT!');
+            updateUI();
+
+            if (lives <= 0) {
+                endGame();
+            }
+        }
+
+        function applyPowerup(type) {
+            let message = '';
+            switch (type) {
+                case 'fireRate':
+                    playerFireRateModifier *= 0.9; // 10% faster
+                    if (playerFireRateModifier < 0.2) playerFireRateModifier = 0.2; // Cap max speed
+                    message = 'FIRE RATE UP!';
+                    break;
+                case 'bouncyFire':
+                    playerBulletBounces++;
+                    if (playerBulletBounces > 3) playerBulletBounces = 3; // Cap bounces
+                    message = 'BOUNCY SHOTS!';
+                    break;
+                case 'moreGun':
+                    playerGunLevel++;
+                    if (playerGunLevel > 3) playerGunLevel = 3; // Cap gun level
+                    message = 'MORE GUNS!';
+                    break;
+                case 'extraLife':
+                    lives++;
+                    message = 'EXTRA LIFE!';
+                    break;
+            }
+            showMessage(message);
+            updateUI();
+        }
+
+        function endGame() {
+            gameOver = true;
+            showMessage('GAME OVER!', false); // Don't fade out
+            showRestartButton();
+            litechat.utils.toast('info', `Game Over! Final Score: ${score}`);
+        }
+
+        function resetGame() {
+            // Clear all game objects
+            playerBullets.forEach(b => scene.remove(b.mesh));
+            enemies.forEach(e => scene.remove(e.mesh));
+            powerups.forEach(p => scene.remove(p.mesh));
+            particles.forEach(p => scene.remove(p.mesh));
+
+            playerBullets.length = 0;
+            enemies.length = 0;
+            enemyBullets.length = 0; // If implemented
+            powerups.length = 0;
+            particles.length = 0;
+
+            // Reset game state
+            score = 0;
+            lives = 3;
+            gameOver = false;
+            lastEnemySpawnTime = 0;
+            lastPlayerFireTime = 0;
+            playerFireRateModifier = 1.0;
+            playerBulletBounces = 0;
+            playerGunLevel = 1;
+            playerInvincible = false;
+            playerInvincibleEndTime = 0;
+            playerHitFlashTimer = 0;
+
+            player.mesh.position.set(0, 0, -GAME_HEIGHT / 2 + 2); // Reset player position
+            player.mesh.visible = true; // Ensure player is visible
+
+            hideRestartButton();
+            messageDisplay.classList.remove('opacity-100'); // Hide "GAME OVER"
+            messageDisplay.classList.add('opacity-0');
+            updateUI();
+            showMessage('GET READY!', true);
+        }
+
+        // --- Event Listeners ---
+        const mouse = new THREE.Vector2();
+        const raycaster = new THREE.Raycaster();
+        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // XZ plane at Y=0
+
+        // Handle mouse movement for player
+        canvas.addEventListener('mousemove', (event) => {
+            if (gameOver) return;
+            // Calculate mouse position in normalized device coordinates (-1 to +1)
+            mouse.x = (event.offsetX / canvas.width) * 2 - 1;
+            mouse.y = -(event.offsetY / canvas.height) * 2 + 1;
+
+            // Update the raycaster with the camera and mouse position
+            raycaster.setFromCamera(mouse, camera);
+
+            // Intersect the raycaster with the game plane
+            const intersectionPoint = new THREE.Vector3();
+            raycaster.ray.intersectPlane(plane, intersectionPoint);
+
+            // Clamp player position within game bounds
+            player.mesh.position.x = Math.max(-GAME_WIDTH / 2 + player.mesh.geometry.parameters.radiusTop, Math.min(GAME_WIDTH / 2 - player.mesh.geometry.parameters.radiusTop, intersectionPoint.x));
+            player.mesh.position.z = Math.max(-GAME_HEIGHT / 2 + 2, Math.min(GAME_HEIGHT / 2 - 2, intersectionPoint.z)); // Keep player in lower half
+        });
+
+        // Handle mouse click for firing
+        canvas.addEventListener('mousedown', (event) => {
+            if (gameOver) return;
+            if (event.button === 0) { // Left click
+                handlePlayerFire(performance.now());
+            }
+        });
+
+        // Prevent context menu on right click
+        canvas.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+        });
+
+
+        // --- Animation Loop ---
+        let lastFrameTime = performance.now();
+
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+
+            const deltaTime = (currentTime - lastFrameTime); // Milliseconds
+            lastFrameTime = currentTime;
+
+            if (gameOver) {
+                // Keep rendering but no game logic updates
+                renderer.render(scene, camera);
+                return;
+            }
+
+            // Update player invincibility
+            if (playerInvincible && currentTime > playerInvincibleEndTime) {
+                playerInvincible = false;
+                player.mesh.visible = true;
+            }
+
+            // Background scrolling
+            backgroundMaterial.map.offset.y -= BACKGROUND_SCROLL_SPEED * (deltaTime / 1000); // Adjust speed with deltaTime
+            if (backgroundMaterial.map.offset.y < -1) { // Reset offset to create seamless loop
+                backgroundMaterial.map.offset.y = 0;
+            }
+
+            // Player Bullet movement
+            for (let i = playerBullets.length - 1; i >= 0; i--) {
+                const bullet = playerBullets[i];
+                bullet.mesh.translateZ(PLAYER_BULLET_SPEED); // Move forward
+                if (bullet.mesh.position.z > GAME_HEIGHT / 2 ||
+                    bullet.mesh.position.x < -GAME_WIDTH / 2 ||
+                    bullet.mesh.position.x > GAME_WIDTH / 2) { // Out of bounds
+                    scene.remove(bullet.mesh);
+                    playerBullets.splice(i, 1);
+                }
+            }
+
+            // Enemy Spawning
+            if (currentTime - lastEnemySpawnTime > ENEMY_SPAWN_INTERVAL * (0.8 + Math.random() * 0.4)) { // Randomize slightly
+                let enemyType = 'basic';
+                if (score > 1000 && Math.random() < 0.3) enemyType = 'fast';
+                if (score > 3000 && Math.random() < 0.2) enemyType = 'strong';
+                enemies.push(createEnemy(enemyType));
+                lastEnemySpawnTime = currentTime;
+            }
+
+            // Enemy Movement
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                const speed = ENEMY_SPEED_BASE + (score / 5000) * 0.01; // Enemies get faster with score
+                enemy.mesh.position.z -= speed; // Move down
+                if (enemy.mesh.position.z < -GAME_HEIGHT / 2 - 1) { // Off screen
+                    scene.remove(enemy.mesh);
+                    enemies.splice(i, 1);
+                    // Optionally, penalize player for letting enemy escape
+                }
+            }
+
+            // Powerup Movement
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const powerup = powerups[i];
+                powerup.mesh.position.z -= 0.05; // Move down slower than enemies
+                powerup.mesh.rotation.y += 0.02; // Rotate for visual
+                if (powerup.mesh.position.z < -GAME_HEIGHT / 2 - 1) { // Off screen
+                    scene.remove(powerup.mesh);
+                    powerups.splice(i, 1);
+                }
+            }
+
+            // Particle Updates
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                particle.mesh.position.add(particle.velocity);
+                particle.mesh.material.opacity -= 0.015; // Fade out
+                particle.life--;
+                if (particle.life <= 0 || particle.mesh.material.opacity <= 0) {
+                    scene.remove(particle.mesh);
+                    particles.splice(i, 1);
+                }
+            }
+
+            checkCollisions();
+            updateUI();
+            renderer.render(scene, camera);
+        }
+
+        // Start the game!
+        animate(performance.now());
+        showMessage('Welcome to LiteShooter!', true);
+
+    } catch (error) {
+        litechat.utils.log('error', '❌ FAILED to create game:', error.message);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+        errorDiv.textContent = `Error loading game: ${error.message}. Check console for details.`;
+        litechat.target.appendChild(errorDiv);
+    }
+}
+
+createShooterGame();
+        } catch (error) {
+            console.error('Execution error:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+            errorDiv.textContent = 'Execution Error: ' + error.message;
+            document.getElementById('litechat-target').appendChild(errorDiv);
+        }
+    </script>
+</body>
+</html>

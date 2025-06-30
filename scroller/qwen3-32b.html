@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>qwen3-32b - LiteChat Race Result</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button { transition: all 0.2s ease-in-out; border-bottom: 2px solid transparent; }
+        .tab-button.active { border-bottom-color: #6366f1; color: #4f46e5; background-color: #e0e7ff; }
+        .dark .tab-button.active { border-bottom-color: #818cf8; color: #a5b4fc; background-color: #374151; }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-4 sm:p-6 md:p-8">
+    <div class="max-w-7xl mx-auto container bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+        <div class="header bg-gradient-to-r from-violet-600 to-indigo-600 text-white p-6 sm:p-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold mb-2">🚀 qwen3-32b</h1>
+            <p class="text-indigo-200">LiteChat Race Result</p>
+        </div>
+        
+        <div class="p-4 sm:p-6">
+            <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+                <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                    <button class="tab-button active text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 whitespace-nowrap py-3 px-4 font-medium text-sm rounded-t-md" data-tab="preview">Live Preview</button>
+                    <button class="tab-button text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 whitespace-nowrap py-3 px-4 font-medium text-sm rounded-t-md" data-tab="raw">Raw Response</button>
+                </nav>
+            </div>
+
+            <div id="preview" class="tab-content active">
+                <div id="litechat-target" class="w-full min-h-[600px] bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"></div>
+            </div>
+
+            <div id="raw" class="tab-content">
+                <div class="w-full min-h-[600px] bg-gray-900 text-white rounded-lg p-4 overflow-x-auto font-mono">
+                    <pre class="whitespace-pre-wrap text-sm"><code>```runjs
+// Clear any previous content
+litechat.target.replaceChildren();
+
+// Load Three.js and OrbitControls
+const modules = await litechat.utils.loadModules([
+  {
+    url: 'https://unpkg.com/three@0.170.0/build/three.module.js',
+    name: 'THREE',
+    globalKey: 'THREE',
+    importMap: {
+      "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+    }
+  },
+  {
+    url: 'https://unpkg.com/three@0.170.0/examples/jsm/controls/OrbitControls.js',
+    name: 'OrbitControls',
+    globalKey: 'OrbitControls',
+    dependencies: ['THREE']
+  }
+]);
+
+const { THREE, OrbitControls } = modules;
+
+// Game config
+const config = {
+  playerSpeed: 0.05,
+  bulletSpeed: 0.03,
+  enemySpawnRate: 1000,
+  enemySpeed: 0.01,
+  gameAreaRadius: 8,
+  lives: 3,
+  maxBullets: 20,
+  bonusTypes: [
+    { type: 'fireRate', label: '⚡' },
+    { type: 'bouncy', label: '🌀' },
+    { type: 'altFire', label: '⬅️/➡️' },
+    { type: 'spreadFire', label: '↕️' },
+    { type: 'extraLife', label: '❤️' }
+  ]
+};
+
+// Initialize scene
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a1a);
+
+// Camera setup
+const camera = new THREE.PerspectiveCamera(
+  70,
+  800 / 600,
+  0.1,
+  100
+);
+camera.position.set(0, 2, 10);
+camera.lookAt(0, 0, 0);
+
+// Renderer setup
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(800, 600);
+renderer.shadowMap.enabled = true;
+
+// Controls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableZoom = false;
+controls.enablePan = false;
+controls.enableDamping = true;
+controls.minDistance = 5;
+controls.maxDistance = 15;
+
+// Add to DOM
+const gameContainer = document.createElement('div');
+gameContainer.className = 'p-4 rounded-lg shadow-xl bg-gray-900 border border-gray-800';
+gameContainer.appendChild(renderer.domElement);
+litechat.target.appendChild(gameContainer);
+
+// Add UI
+const ui = document.createElement('div');
+ui.className = 'absolute top-4 left-4 text-white bg-gray-800 bg-opacity-70 px-4 py-2 rounded-md';
+ui.innerHTML = `
+  &lt;div&gt;Lives: &lt;span id="lives" class="text-red-400"&gt;3&lt;/span&gt;&lt;/div&gt;
+  &lt;div id="bonuses" class="text-yellow-300"&gt;&lt;/div&gt;
+`;
+gameContainer.appendChild(ui);
+
+// Create ground grid
+const gridHelper = new THREE.GridHelper(20, 20);
+scene.add(gridHelper);
+
+// Create player
+const playerGeometry = new THREE.CylinderGeometry(0.5, 1.5, 2, 32);
+const playerMaterial = new THREE.MeshStandardMaterial({
+  color: 0x00ffcc,
+  metalness: 0.7,
+  roughness: 0.3
+});
+const player = new THREE.Mesh(playerGeometry, playerMaterial);
+player.position.set(0, 0, 0);
+player.rotation.x = Math.PI/2;
+player.castShadow = true;
+player.receiveShadow = true;
+scene.add(player);
+
+// Create lights
+const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(5, 10, 7.5);
+scene.add(directionalLight);
+
+// Game objects
+const enemies = [];
+const bullets = [];
+let activeBonuses = [];
+let currentFireMode = 1;
+
+// Bonus system
+const bonusIcons = {
+  'fireRate': '⚡',
+  'bouncy': '🌀',
+  'altFire': '⬅️/➡️',
+  'spreadFire': '↕️',
+  'extraLife': '❤️'
+};
+
+// Create player shooting
+function shoot() {
+  const bulletGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+  const bulletMaterial = new THREE.MeshStandardMaterial({
+    color: 0xff00cc,
+    emissive: 0x880066,
+    emissiveIntensity: 0.8
+  });
+  const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+  bullet.position.copy(player.position);
+  scene.add(bullet);
+  
+  const direction = new THREE.Vector3(0, 0, 1);
+  
+  // Apply fire mode variations
+  switch(currentFireMode) {
+    case 2:
+      bullets.push({
+        mesh: bullet,
+        direction: direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0), -0.2)
+      });
+      bullets.push({
+        mesh: new THREE.Mesh(bulletGeometry, bulletMaterial),
+        direction: direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0), 0.2)
+      });
+      break;
+    case 3:
+      bullets.push({
+        mesh: bullet,
+        direction: direction.clone()
+      });
+      bullets.push({
+        mesh: new THREE.Mesh(bulletGeometry, bulletMaterial),
+        direction: direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0), -0.4)
+      });
+      bullets.push({
+        mesh: new THREE.Mesh(bulletGeometry, bulletMaterial),
+        direction: direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0), 0.4)
+      });
+      break;
+    default:
+      bullets.push({ mesh: bullet, direction });
+  }
+}
+
+// Add mouse controls
+gameContainer.addEventListener('mousemove', (e) =&gt; {
+  const rect = gameContainer.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width * 2 - 1;
+  const y = (e.clientY - rect.top) / rect.height * 2 - 1;
+  const vector = new THREE.Vector3(x, y, 0);
+  player.position.x = vector.x * config.gameAreaRadius;
+  player.position.z = vector.y * config.gameAreaRadius;
+});
+
+// Add click shooting
+gameContainer.addEventListener('click', shoot);
+
+// Create enemy
+function createEnemy() {
+  const enemyGeometry = new THREE.BoxGeometry(1, 1, 1);
+  const enemyMaterial = new THREE.MeshStandardMaterial({
+    color: `hsl(${Math.random()*360}, 70%, 50%)`,
+    emissive: 0x222222,
+    emissiveIntensity: 0.3
+  });
+  const enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+  enemy.position.set(
+    (Math.random() - 0.5) * config.gameAreaRadius * 2,
+    0,
+    -10
+  );
+  enemy.rotation.set(Math.PI/4, 0, 0);
+  enemy.castShadow = true;
+  enemy.receiveShadow = true;
+  enemy.health = 1;
+  scene.add(enemy);
+  enemies.push(enemy);
+}
+
+// Create bonus
+function createBonus() {
+  const bonusGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+  const bonusMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffcc00,
+    emissive: 0x666600,
+    emissiveIntensity: 0.7
+  });
+  const bonus = new THREE.Mesh(bonusGeometry, bonusMaterial);
+  const type = config.bonusTypes[Math.floor(Math.random() * config.bonusTypes.length)];
+  bonus.userData = { type };
+  
+  // Position at random point near player
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 2 + Math.random() * 3;
+  bonus.position.set(
+    Math.cos(angle) * radius,
+    0,
+    Math.sin(angle) * radius
+  );
+  scene.add(bonus);
+  return bonus;
+}
+
+// Collision detection
+function checkCollisions() {
+  // Bullet vs enemies
+  bullets.forEach((bullet, bulletIndex) =&gt; {
+    enemies.forEach((enemy, enemyIndex) =&gt; {
+      if (enemies.length && bullets.length) {
+        const distance = bullet.mesh.position.distanceTo(enemy.position);
+        if (distance &lt; 0.8) {
+          enemy.health -= 1;
+          if (enemy.health &lt;= 0) {
+            // Create explosion effect
+            for (let i = 0; i &lt; 4; i++) {
+              const spark = new THREE.Mesh(
+                new THREE.SphereGeometry(0.05, 8, 8),
+                new THREE.MeshStandardMaterial({ color: 0xff4444 })
+              );
+              spark.position.copy(enemy.position);
+              const angle = (i * Math.PI * 2) / 4;
+              const velocityX = Math.cos(angle) * 0.1;
+              const velocityZ = Math.sin(angle) * 0.1;
+              setTimeout(() =&gt; {
+                if (scene.getObjectById(spark.id)) {
+                  scene.remove(spark);
+                }
+              }, 1000);
+              scene.add(spark);
+            }
+            
+            // Add random bonus
+            const shouldDropBonus = Math.random() &lt; 0.4;
+            if (shouldDropBonus) {
+              const bonus = createBonus();
+              bonus.userData = { 
+                type: config.bonusTypes[Math.floor(Math.random() * config.bonusTypes.length)].type,
+                expiration: Date.now() + 5000
+              };
+              bonus.position.y = 3;
+            }
+            
+            scene.remove(enemy);
+            enemies.splice(enemyIndex, 1);
+          }
+          
+          // Remove bullet if out of bounds
+          if (scene.getObjectById(bullet.mesh.id)) {
+            scene.remove(bullet.mesh);
+          }
+          bullets.splice(bulletIndex, 1);
+        }
+      }
+    });
+  });
+
+  // Player vs enemies
+  enemies.forEach((enemy, index) =&gt; {
+    const distance = enemy.position.distanceTo(player.position);
+    if (distance &lt; 1.2) {
+      loseLife();
+      scene.remove(enemy);
+      enemies.splice(index, 1);
+    }
+  });
+
+  // Player vs bonuses
+  activeBonuses.forEach((bonus, index) =&gt; {
+    if (bonus.position.distanceTo(player.position) &lt; 0.4) {
+      applyBonus(bonus.userData.type);
+      scene.remove(bonus.mesh);
+      activeBonuses.splice(index, 1);
+    }
+  });
+}
+
+// Apply bonus effects
+function applyBonus(type) {
+  const bonusElement = document.createElement('span');
+  bonusElement.className = 'inline-block bg-blue-500 rounded-full px-2 py-1 mr-2';
+  bonusElement.textContent = `${bonusIcons[type]} +${type}`;
+  ui.querySelector('#bonuses').appendChild(bonusElement);
+  
+  switch(type) {
+    case 'fireRate':
+      config.bulletSpeed *= 1.1;
+      break;
+    case 'bouncy':
+      bullets.forEach(b =&gt; b.bounces = 1);
+      break;
+    case 'altFire':
+      currentFireMode = 2;
+      break;
+    case 'spreadFire':
+      currentFireMode = 3;
+      break;
+    case 'extraLife':
+      config.lives += 1;
+      updateLivesDisplay();
+      break;
+  }
+  
+  // Remove UI element after 3 seconds
+  setTimeout(() =&gt; {
+    bonusElement.remove();
+  }, 3000);
+}
+
+// Update lives display
+function updateLivesDisplay() {
+  document.getElementById('lives').textContent = config.lives;
+}
+
+// Lose life handler
+function loseLife() {
+  config.lives -= 1;
+  updateLivesDisplay();
+  if (config.lives &lt;= 0) {
+    endGame();
+  }
+}
+
+// End game
+function endGame() {
+  gameContainer.innerHTML = `
+    &lt;div class="text-center p-8 text-white"&gt;
+      &lt;h2 class="text-3xl mb-4"&gt;Game Over!&lt;/h2&gt;
+      &lt;p class="text-xl"&gt;Final Lives: ${config.lives}&lt;/p&gt;
+    &lt;/div&gt;
+  `;
+  gameContainer.classList.add('bg-red-900');
+}
+
+// Spawn enemies
+function spawnEnemy() {
+  if (Math.random() &lt; 0.8) {
+    createEnemy();
+  }
+  config.enemySpawnRate = Math.max(200, config.enemySpawnRate * 0.98);
+  config.enemySpeed = Math.min(0.2, config.enemySpeed * 1.01);
+  
+  setTimeout(spawnEnemy, config.enemySpawnRate);
+}
+setTimeout(spawnEnemy, 1000);
+
+// Spawn bonuses
+function spawnBonus() {
+  const bonus = createBonus();
+  bonus.userData.expiration = Date.now() + 5000;
+  activeBonuses.push(bonus);
+  setTimeout(() =&gt; {
+    if (scene.getObjectById(bonus.id)) {
+      scene.remove(bonus);
+    }
+  }, 5000);
+}
+setInterval(() =&gt; {
+  if (Math.random() &lt; 0.3) {
+    spawnBonus();
+  }
+}, 3000);
+
+// Game loop
+function animate() {
+  requestAnimationFrame(animate);
+  
+  // Move enemies towards player
+  enemies.forEach(enemy =&gt; {
+    const direction = new THREE.Vector3(
+      player.position.x - enemy.position.x,
+      player.position.y - enemy.position.y,
+      player.position.z - enemy.position.z
+    ).normalize();
+    
+    enemy.position.add(direction.clone().multiplyScalar(config.enemySpeed));
+    
+    // Add some rotation for visual effect
+    enemy.rotation.y += 0.05;
+  });
+
+  // Update bullets
+  bullets.forEach((bullet, index) =&gt; {
+    bullet.mesh.position.add(bullet.direction.clone().multiplyScalar(config.bulletSpeed));
+    
+    // Check if bullet should bounce
+    if (bullet.bounces && bullet.mesh.position.y &lt; -3) {
+      bullet.direction.y *= -1;
+      bullet.bounces--;
+    }
+    
+    // Remove bullets that go too far
+    if (bullet.mesh.position.distanceTo(new THREE.Vector3(0,0,0)) &gt; 15) {
+      scene.remove(bullet.mesh);
+      bullets.splice(index, 1);
+    }
+  });
+
+  // Update active bonuses
+  activeBonuses.forEach((bonus, index) =&gt; {
+    bonus.mesh.position.y -= 0.005;
+    if (bonus.mesh.position.y &lt; -3) {
+      scene.remove(bonus.mesh);
+      activeBonuses.splice(index, 1);
+    }
+  });
+
+  // Keep camera focused on player
+  controls.target.set(player.position.x, player.position.y, player.position.z);
+  controls.update();
+
+  renderer.render(scene, camera);
+  checkCollisions();
+}
+
+animate();
+
+litechat.utils.log('info', '🎮 2D Scrolling Shooter with 3D Effects loaded!');
+```
+
+This creates a vibrant 2D scrolling shooter with a 3D feel using Three.js. You can:
+
+1. Move your mouse to control the player's position
+2. Click to shoot (default mode: straight)
+3. Collect different bonuses that appear randomly (they'll fall and disappear after 5 seconds)
+4. Watch enemies get faster over time
+
+Features include:
+- Colorful 3D models with glowing effects
+- Bouncy bullets that can ricochet off killed enemies
+- Different firing modes (alternating left/right or spread V-shape)
+- Random power-ups that increase fire rate, add extra lives, etc.
+- Animated explosions when enemies are destroyed
+-不断增加的敌人速度 (increasing enemy speed over time)
+
+The game area is designed to feel comfortable with smooth camera controls and appropriate scaling. The UI shows current lives and active bonuses.</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer bg-gray-50 dark:bg-gray-800/50 p-4 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+            Generated by <strong>LiteChat</strong> • <a href="./index.html" class="text-indigo-600 dark:text-indigo-400 hover:underline">Back to Main Page</a>
+        </div>
+    </div>
+
+    <script type="module">
+        // Tab switching logic
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const tabId = button.dataset.tab;
+                tabContents.forEach(content => content.id === tabId ? content.classList.add('active') : content.classList.remove('active'));
+            });
+        });
+        
+        // --- LITECHAT MOCK API ---
+        
+        const litechatTarget = document.getElementById('litechat-target');
+        async function loadModules(moduleConfigs) {
+            const loadedModules = {};
+            const loadPromises = {};
+            const globalImportMap = {};
+            moduleConfigs.forEach(config => {
+                if (config.importMap) Object.assign(globalImportMap, config.importMap);
+            });
+            const existingMap = document.querySelector('script[type="importmap"]');
+            if (existingMap) existingMap.remove();
+            if (Object.keys(globalImportMap).length > 0) {
+                const mapScript = document.createElement('script');
+                mapScript.type = 'importmap';
+                mapScript.textContent = JSON.stringify({ imports: globalImportMap });
+                document.head.appendChild(mapScript);
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            const loadSingleModule = async (config) => {
+                const key = config.globalKey || config.name;
+                if (window[key]) return window[key];
+                if (key in loadPromises) return loadPromises[key];
+                if (config.dependencies) {
+                    await Promise.all(config.dependencies.map(depKey => {
+                        const depModule = moduleConfigs.find(m => (m.globalKey || m.name) === depKey);
+                        if (depModule) return loadSingleModule(depModule);
+                        return Promise.resolve();
+                    }));
+                }
+                loadPromises[key] = (async () => {
+                    try {
+                        const module = await import(config.url);
+                        window[key] = module;
+                        loadedModules[key] = module;
+                        return module;
+                    } catch (error) {
+                        console.error(`Error loading module ${config.name}:`, error);
+                        throw error;
+                    }
+                })();
+                return loadPromises[key];
+            };
+            await Promise.all(moduleConfigs.map(config => loadSingleModule(config)));
+            return loadedModules;
+        }
+        window.litechat = {
+            utils: {
+                log: (...args) => console.log(...args),
+                toast: (message) => alert(message),
+                error: (...args) => console.error(...args),
+                warn: (...args) => console.warn(...args),
+                loadModules,
+                loadModule: async (url, name, key, importMap) => (await loadModules([{url, name, globalKey: key, importMap}]))[key || name],
+            },
+            target: litechatTarget,
+            emit: (eventName, payload) => window.dispatchEvent(new CustomEvent(eventName, { detail: payload })),
+        };
+    
+
+        // --- EXECUTE CODE ---
+        try {
+            // Inject the extracted runjs code here
+            // Clear any previous content
+litechat.target.replaceChildren();
+
+// Load Three.js and OrbitControls
+const modules = await litechat.utils.loadModules([
+  {
+    url: 'https://unpkg.com/three@0.170.0/build/three.module.js',
+    name: 'THREE',
+    globalKey: 'THREE',
+    importMap: {
+      "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+    }
+  },
+  {
+    url: 'https://unpkg.com/three@0.170.0/examples/jsm/controls/OrbitControls.js',
+    name: 'OrbitControls',
+    globalKey: 'OrbitControls',
+    dependencies: ['THREE']
+  }
+]);
+
+const { THREE, OrbitControls } = modules;
+
+// Game config
+const config = {
+  playerSpeed: 0.05,
+  bulletSpeed: 0.03,
+  enemySpawnRate: 1000,
+  enemySpeed: 0.01,
+  gameAreaRadius: 8,
+  lives: 3,
+  maxBullets: 20,
+  bonusTypes: [
+    { type: 'fireRate', label: '⚡' },
+    { type: 'bouncy', label: '🌀' },
+    { type: 'altFire', label: '⬅️/➡️' },
+    { type: 'spreadFire', label: '↕️' },
+    { type: 'extraLife', label: '❤️' }
+  ]
+};
+
+// Initialize scene
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a1a);
+
+// Camera setup
+const camera = new THREE.PerspectiveCamera(
+  70,
+  800 / 600,
+  0.1,
+  100
+);
+camera.position.set(0, 2, 10);
+camera.lookAt(0, 0, 0);
+
+// Renderer setup
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(800, 600);
+renderer.shadowMap.enabled = true;
+
+// Controls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableZoom = false;
+controls.enablePan = false;
+controls.enableDamping = true;
+controls.minDistance = 5;
+controls.maxDistance = 15;
+
+// Add to DOM
+const gameContainer = document.createElement('div');
+gameContainer.className = 'p-4 rounded-lg shadow-xl bg-gray-900 border border-gray-800';
+gameContainer.appendChild(renderer.domElement);
+litechat.target.appendChild(gameContainer);
+
+// Add UI
+const ui = document.createElement('div');
+ui.className = 'absolute top-4 left-4 text-white bg-gray-800 bg-opacity-70 px-4 py-2 rounded-md';
+ui.innerHTML = `
+  <div>Lives: <span id="lives" class="text-red-400">3</span></div>
+  <div id="bonuses" class="text-yellow-300"></div>
+`;
+gameContainer.appendChild(ui);
+
+// Create ground grid
+const gridHelper = new THREE.GridHelper(20, 20);
+scene.add(gridHelper);
+
+// Create player
+const playerGeometry = new THREE.CylinderGeometry(0.5, 1.5, 2, 32);
+const playerMaterial = new THREE.MeshStandardMaterial({
+  color: 0x00ffcc,
+  metalness: 0.7,
+  roughness: 0.3
+});
+const player = new THREE.Mesh(playerGeometry, playerMaterial);
+player.position.set(0, 0, 0);
+player.rotation.x = Math.PI/2;
+player.castShadow = true;
+player.receiveShadow = true;
+scene.add(player);
+
+// Create lights
+const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(5, 10, 7.5);
+scene.add(directionalLight);
+
+// Game objects
+const enemies = [];
+const bullets = [];
+let activeBonuses = [];
+let currentFireMode = 1;
+
+// Bonus system
+const bonusIcons = {
+  'fireRate': '⚡',
+  'bouncy': '🌀',
+  'altFire': '⬅️/➡️',
+  'spreadFire': '↕️',
+  'extraLife': '❤️'
+};
+
+// Create player shooting
+function shoot() {
+  const bulletGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+  const bulletMaterial = new THREE.MeshStandardMaterial({
+    color: 0xff00cc,
+    emissive: 0x880066,
+    emissiveIntensity: 0.8
+  });
+  const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+  bullet.position.copy(player.position);
+  scene.add(bullet);
+  
+  const direction = new THREE.Vector3(0, 0, 1);
+  
+  // Apply fire mode variations
+  switch(currentFireMode) {
+    case 2:
+      bullets.push({
+        mesh: bullet,
+        direction: direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0), -0.2)
+      });
+      bullets.push({
+        mesh: new THREE.Mesh(bulletGeometry, bulletMaterial),
+        direction: direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0), 0.2)
+      });
+      break;
+    case 3:
+      bullets.push({
+        mesh: bullet,
+        direction: direction.clone()
+      });
+      bullets.push({
+        mesh: new THREE.Mesh(bulletGeometry, bulletMaterial),
+        direction: direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0), -0.4)
+      });
+      bullets.push({
+        mesh: new THREE.Mesh(bulletGeometry, bulletMaterial),
+        direction: direction.clone().applyAxisAngle(new THREE.Vector3(0,1,0), 0.4)
+      });
+      break;
+    default:
+      bullets.push({ mesh: bullet, direction });
+  }
+}
+
+// Add mouse controls
+gameContainer.addEventListener('mousemove', (e) => {
+  const rect = gameContainer.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width * 2 - 1;
+  const y = (e.clientY - rect.top) / rect.height * 2 - 1;
+  const vector = new THREE.Vector3(x, y, 0);
+  player.position.x = vector.x * config.gameAreaRadius;
+  player.position.z = vector.y * config.gameAreaRadius;
+});
+
+// Add click shooting
+gameContainer.addEventListener('click', shoot);
+
+// Create enemy
+function createEnemy() {
+  const enemyGeometry = new THREE.BoxGeometry(1, 1, 1);
+  const enemyMaterial = new THREE.MeshStandardMaterial({
+    color: `hsl(${Math.random()*360}, 70%, 50%)`,
+    emissive: 0x222222,
+    emissiveIntensity: 0.3
+  });
+  const enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+  enemy.position.set(
+    (Math.random() - 0.5) * config.gameAreaRadius * 2,
+    0,
+    -10
+  );
+  enemy.rotation.set(Math.PI/4, 0, 0);
+  enemy.castShadow = true;
+  enemy.receiveShadow = true;
+  enemy.health = 1;
+  scene.add(enemy);
+  enemies.push(enemy);
+}
+
+// Create bonus
+function createBonus() {
+  const bonusGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+  const bonusMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffcc00,
+    emissive: 0x666600,
+    emissiveIntensity: 0.7
+  });
+  const bonus = new THREE.Mesh(bonusGeometry, bonusMaterial);
+  const type = config.bonusTypes[Math.floor(Math.random() * config.bonusTypes.length)];
+  bonus.userData = { type };
+  
+  // Position at random point near player
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 2 + Math.random() * 3;
+  bonus.position.set(
+    Math.cos(angle) * radius,
+    0,
+    Math.sin(angle) * radius
+  );
+  scene.add(bonus);
+  return bonus;
+}
+
+// Collision detection
+function checkCollisions() {
+  // Bullet vs enemies
+  bullets.forEach((bullet, bulletIndex) => {
+    enemies.forEach((enemy, enemyIndex) => {
+      if (enemies.length && bullets.length) {
+        const distance = bullet.mesh.position.distanceTo(enemy.position);
+        if (distance < 0.8) {
+          enemy.health -= 1;
+          if (enemy.health <= 0) {
+            // Create explosion effect
+            for (let i = 0; i < 4; i++) {
+              const spark = new THREE.Mesh(
+                new THREE.SphereGeometry(0.05, 8, 8),
+                new THREE.MeshStandardMaterial({ color: 0xff4444 })
+              );
+              spark.position.copy(enemy.position);
+              const angle = (i * Math.PI * 2) / 4;
+              const velocityX = Math.cos(angle) * 0.1;
+              const velocityZ = Math.sin(angle) * 0.1;
+              setTimeout(() => {
+                if (scene.getObjectById(spark.id)) {
+                  scene.remove(spark);
+                }
+              }, 1000);
+              scene.add(spark);
+            }
+            
+            // Add random bonus
+            const shouldDropBonus = Math.random() < 0.4;
+            if (shouldDropBonus) {
+              const bonus = createBonus();
+              bonus.userData = { 
+                type: config.bonusTypes[Math.floor(Math.random() * config.bonusTypes.length)].type,
+                expiration: Date.now() + 5000
+              };
+              bonus.position.y = 3;
+            }
+            
+            scene.remove(enemy);
+            enemies.splice(enemyIndex, 1);
+          }
+          
+          // Remove bullet if out of bounds
+          if (scene.getObjectById(bullet.mesh.id)) {
+            scene.remove(bullet.mesh);
+          }
+          bullets.splice(bulletIndex, 1);
+        }
+      }
+    });
+  });
+
+  // Player vs enemies
+  enemies.forEach((enemy, index) => {
+    const distance = enemy.position.distanceTo(player.position);
+    if (distance < 1.2) {
+      loseLife();
+      scene.remove(enemy);
+      enemies.splice(index, 1);
+    }
+  });
+
+  // Player vs bonuses
+  activeBonuses.forEach((bonus, index) => {
+    if (bonus.position.distanceTo(player.position) < 0.4) {
+      applyBonus(bonus.userData.type);
+      scene.remove(bonus.mesh);
+      activeBonuses.splice(index, 1);
+    }
+  });
+}
+
+// Apply bonus effects
+function applyBonus(type) {
+  const bonusElement = document.createElement('span');
+  bonusElement.className = 'inline-block bg-blue-500 rounded-full px-2 py-1 mr-2';
+  bonusElement.textContent = `${bonusIcons[type]} +${type}`;
+  ui.querySelector('#bonuses').appendChild(bonusElement);
+  
+  switch(type) {
+    case 'fireRate':
+      config.bulletSpeed *= 1.1;
+      break;
+    case 'bouncy':
+      bullets.forEach(b => b.bounces = 1);
+      break;
+    case 'altFire':
+      currentFireMode = 2;
+      break;
+    case 'spreadFire':
+      currentFireMode = 3;
+      break;
+    case 'extraLife':
+      config.lives += 1;
+      updateLivesDisplay();
+      break;
+  }
+  
+  // Remove UI element after 3 seconds
+  setTimeout(() => {
+    bonusElement.remove();
+  }, 3000);
+}
+
+// Update lives display
+function updateLivesDisplay() {
+  document.getElementById('lives').textContent = config.lives;
+}
+
+// Lose life handler
+function loseLife() {
+  config.lives -= 1;
+  updateLivesDisplay();
+  if (config.lives <= 0) {
+    endGame();
+  }
+}
+
+// End game
+function endGame() {
+  gameContainer.innerHTML = `
+    <div class="text-center p-8 text-white">
+      <h2 class="text-3xl mb-4">Game Over!</h2>
+      <p class="text-xl">Final Lives: ${config.lives}</p>
+    </div>
+  `;
+  gameContainer.classList.add('bg-red-900');
+}
+
+// Spawn enemies
+function spawnEnemy() {
+  if (Math.random() < 0.8) {
+    createEnemy();
+  }
+  config.enemySpawnRate = Math.max(200, config.enemySpawnRate * 0.98);
+  config.enemySpeed = Math.min(0.2, config.enemySpeed * 1.01);
+  
+  setTimeout(spawnEnemy, config.enemySpawnRate);
+}
+setTimeout(spawnEnemy, 1000);
+
+// Spawn bonuses
+function spawnBonus() {
+  const bonus = createBonus();
+  bonus.userData.expiration = Date.now() + 5000;
+  activeBonuses.push(bonus);
+  setTimeout(() => {
+    if (scene.getObjectById(bonus.id)) {
+      scene.remove(bonus);
+    }
+  }, 5000);
+}
+setInterval(() => {
+  if (Math.random() < 0.3) {
+    spawnBonus();
+  }
+}, 3000);
+
+// Game loop
+function animate() {
+  requestAnimationFrame(animate);
+  
+  // Move enemies towards player
+  enemies.forEach(enemy => {
+    const direction = new THREE.Vector3(
+      player.position.x - enemy.position.x,
+      player.position.y - enemy.position.y,
+      player.position.z - enemy.position.z
+    ).normalize();
+    
+    enemy.position.add(direction.clone().multiplyScalar(config.enemySpeed));
+    
+    // Add some rotation for visual effect
+    enemy.rotation.y += 0.05;
+  });
+
+  // Update bullets
+  bullets.forEach((bullet, index) => {
+    bullet.mesh.position.add(bullet.direction.clone().multiplyScalar(config.bulletSpeed));
+    
+    // Check if bullet should bounce
+    if (bullet.bounces && bullet.mesh.position.y < -3) {
+      bullet.direction.y *= -1;
+      bullet.bounces--;
+    }
+    
+    // Remove bullets that go too far
+    if (bullet.mesh.position.distanceTo(new THREE.Vector3(0,0,0)) > 15) {
+      scene.remove(bullet.mesh);
+      bullets.splice(index, 1);
+    }
+  });
+
+  // Update active bonuses
+  activeBonuses.forEach((bonus, index) => {
+    bonus.mesh.position.y -= 0.005;
+    if (bonus.mesh.position.y < -3) {
+      scene.remove(bonus.mesh);
+      activeBonuses.splice(index, 1);
+    }
+  });
+
+  // Keep camera focused on player
+  controls.target.set(player.position.x, player.position.y, player.position.z);
+  controls.update();
+
+  renderer.render(scene, camera);
+  checkCollisions();
+}
+
+animate();
+
+litechat.utils.log('info', '🎮 2D Scrolling Shooter with 3D Effects loaded!');
+        } catch (error) {
+            console.error('Execution error:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+            errorDiv.textContent = 'Execution Error: ' + error.message;
+            document.getElementById('litechat-target').appendChild(errorDiv);
+        }
+    </script>
+</body>
+</html>

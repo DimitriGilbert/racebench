@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>llama-4-scout - LiteChat Race Result</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button { transition: all 0.2s ease-in-out; border-bottom: 2px solid transparent; }
+        .tab-button.active { border-bottom-color: #6366f1; color: #4f46e5; background-color: #e0e7ff; }
+        .dark .tab-button.active { border-bottom-color: #818cf8; color: #a5b4fc; background-color: #374151; }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-4 sm:p-6 md:p-8">
+    <div class="max-w-7xl mx-auto container bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+        <div class="header bg-gradient-to-r from-violet-600 to-indigo-600 text-white p-6 sm:p-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold mb-2">🚀 llama-4-scout</h1>
+            <p class="text-indigo-200">LiteChat Race Result</p>
+        </div>
+        
+        <div class="p-4 sm:p-6">
+            <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+                <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                    <button class="tab-button active text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 whitespace-nowrap py-3 px-4 font-medium text-sm rounded-t-md" data-tab="preview">Live Preview</button>
+                    <button class="tab-button text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 whitespace-nowrap py-3 px-4 font-medium text-sm rounded-t-md" data-tab="raw">Raw Response</button>
+                </nav>
+            </div>
+
+            <div id="preview" class="tab-content active">
+                <div id="litechat-target" class="w-full min-h-[600px] bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"></div>
+            </div>
+
+            <div id="raw" class="tab-content">
+                <div class="w-full min-h-[600px] bg-gray-900 text-white rounded-lg p-4 overflow-x-auto font-mono">
+                    <pre class="whitespace-pre-wrap text-sm"><code>Here is a simple example of a 2D scroll shooter with a 3D effect using Three.js. This example includes live, random bonus drops and enemy difficulty progression.
+
+```runjs
+// Clear any previous content
+litechat.target.replaceChildren();
+
+async function createShooterGame() {
+    try {
+        // Load the modules with proper import map configuration
+        const modules = await litechat.utils.loadModules([
+            {
+                url: 'https://unpkg.com/three@0.170.0/build/three.module.js',
+                name: 'THREE',
+                globalKey: 'THREE',
+                importMap: {
+                    "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+                    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+                }
+            }
+        ]);
+
+        const { THREE } = modules;
+
+        // Create container
+        const container = document.createElement('div');
+        container.className = 'p-4 bg-gray-900 rounded-lg';
+
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 600;
+        canvas.className = 'border border-gray-600 rounded';
+        container.appendChild(canvas);
+
+        // Add info text
+        const info = document.createElement('div');
+        info.className = 'text-white text-center mt-2';
+        info.textContent = 'Use arrow keys to move, space to shoot';
+        container.appendChild(info);
+
+        litechat.target.appendChild(container);
+
+        // Three.js scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x222222);
+
+        const camera = new THREE.OrthographicCamera(-canvas.width / 2, canvas.width / 2, canvas.height / 2, -canvas.height / 2, 1, 1000);
+        camera.position.set(0, 0, 1);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(canvas.width, canvas.height);
+
+        // Add lights
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        scene.add(ambientLight);
+
+        // Player
+        const playerGeometry = new THREE.BoxGeometry(20, 20, 20);
+        const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
+        const player = new THREE.Mesh(playerGeometry, playerMaterial);
+        player.position.set(0, 0, 0);
+        scene.add(player);
+
+        // Bullets
+        const bulletGeometry = new THREE.BoxGeometry(5, 5, 5);
+        const bulletMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const bullets = [];
+
+        // Enemies
+        const enemyGeometry = new THREE.BoxGeometry(20, 20, 20);
+        const enemyMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+        const enemies = [];
+
+        // Bonus
+        const bonusGeometry = new THREE.BoxGeometry(10, 10, 10);
+        const bonusMaterial = new THREE.MeshLambertMaterial({ color: 0xffff00 });
+        let bonus = null;
+
+        // Game variables
+        let score = 0;
+        let lives = 3;
+        let fireRate = 1;
+        let bouncyFire = 0;
+        let guns = 1;
+        let gunOffset = 0;
+
+        // Keyboard input
+        let keysDown = {};
+        document.addEventListener('keydown', (event) =&gt; {
+            keysDown[event.key] = true;
+        });
+        document.addEventListener('keyup', (event) =&gt; {
+            keysDown[event.key] = false;
+        });
+
+        // Game loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Move player
+            if (keysDown['ArrowLeft']) {
+                player.position.x -= 5;
+            }
+            if (keysDown['ArrowRight']) {
+                player.position.x += 5;
+            }
+            if (keysDown['ArrowUp']) {
+                player.position.y += 5;
+            }
+            if (keysDown['ArrowDown']) {
+                player.position.y -= 5;
+            }
+
+            // Shoot bullets
+            if (keysDown[' ']) {
+                for (let i = 0; i &lt; guns; i++) {
+                    const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+                    bullet.position.set(player.position.x + gunOffset * (i - guns / 2 + 0.5), player.position.y, 0);
+                    bullets.push(bullet);
+                    scene.add(bullet);
+                }
+                gunOffset = (gunOffset + 5) % 10;
+                setTimeout(() =&gt; {
+                    gunOffset = 0;
+                }, 100);
+            }
+
+            // Move bullets
+            for (let i = bullets.length - 1; i &gt;= 0; i--) {
+                bullets[i].position.y += 10;
+                if (bullets[i].position.y &gt; canvas.height / 2) {
+                    scene.remove(bullets[i]);
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // Move enemies
+            for (let i = enemies.length - 1; i &gt;= 0; i--) {
+                enemies[i].position.y += 2;
+                if (enemies[i].position.y &gt; canvas.height / 2) {
+                    scene.remove(enemies[i]);
+                    enemies.splice(i, 1);
+                    lives--;
+                }
+            }
+
+            // Check collisions
+            for (let i = bullets.length - 1; i &gt;= 0; i--) {
+                for (let j = enemies.length - 1; j &gt;= 0; j--) {
+                    if (bullets[i].position.distanceTo(enemies[j].position) &lt; 20) {
+                        scene.remove(bullets[i]);
+                        bullets.splice(i, 1);
+                        scene.remove(enemies[j]);
+                        enemies.splice(j, 1);
+                        score++;
+                        if (bouncyFire &gt; 0) {
+                            const newBullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+                            newBullet.position.set(enemies[j].position.x, enemies[j].position.y, 0);
+                            bullets.push(newBullet);
+                            scene.add(newBullet);
+                            bouncyFire--;
+                        }
+                    }
+                }
+            }
+
+            // Add enemies
+            if (Math.random() &lt; 0.05) {
+                const enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+                enemy.position.set(Math.random() * canvas.width - canvas.width / 2, -canvas.height / 2, 0);
+                enemies.push(enemy);
+                scene.add(enemy);
+            }
+
+            // Add bonus
+            if (Math.random() &lt; 0.01 && !bonus) {
+                bonus = new THREE.Mesh(bonusGeometry, bonusMaterial);
+                bonus.position.set(Math.random() * canvas.width - canvas.width / 2, -canvas.height / 2, 0);
+                scene.add(bonus);
+            }
+
+            // Check bonus collision
+            if (bonus && player.position.distanceTo(bonus.position) &lt; 20) {
+                scene.remove(bonus);
+                bonus = null;
+                const bonusType = Math.random();
+                if (bonusType &lt; 0.25) {
+                    fireRate *= 1.1;
+                } else if (bonusType &lt; 0.5) {
+                    bouncyFire = 5;
+                } else if (bonusType &lt; 0.75) {
+                    guns++;
+                } else {
+                    lives++;
+                }
+            }
+
+            // Update renderer
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    } catch (error) {
+        litechat.utils.log('error', '❌ FAILED to create scene:', error.message);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+        errorDiv.textContent = `Error: ${error.message}`;
+        litechat.target.appendChild(errorDiv);
+    }
+}
+createShooterGame();
+```</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer bg-gray-50 dark:bg-gray-800/50 p-4 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+            Generated by <strong>LiteChat</strong> • <a href="./index.html" class="text-indigo-600 dark:text-indigo-400 hover:underline">Back to Main Page</a>
+        </div>
+    </div>
+
+    <script type="module">
+        // Tab switching logic
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const tabId = button.dataset.tab;
+                tabContents.forEach(content => content.id === tabId ? content.classList.add('active') : content.classList.remove('active'));
+            });
+        });
+        
+        // --- LITECHAT MOCK API ---
+        
+        const litechatTarget = document.getElementById('litechat-target');
+        async function loadModules(moduleConfigs) {
+            const loadedModules = {};
+            const loadPromises = {};
+            const globalImportMap = {};
+            moduleConfigs.forEach(config => {
+                if (config.importMap) Object.assign(globalImportMap, config.importMap);
+            });
+            const existingMap = document.querySelector('script[type="importmap"]');
+            if (existingMap) existingMap.remove();
+            if (Object.keys(globalImportMap).length > 0) {
+                const mapScript = document.createElement('script');
+                mapScript.type = 'importmap';
+                mapScript.textContent = JSON.stringify({ imports: globalImportMap });
+                document.head.appendChild(mapScript);
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            const loadSingleModule = async (config) => {
+                const key = config.globalKey || config.name;
+                if (window[key]) return window[key];
+                if (key in loadPromises) return loadPromises[key];
+                if (config.dependencies) {
+                    await Promise.all(config.dependencies.map(depKey => {
+                        const depModule = moduleConfigs.find(m => (m.globalKey || m.name) === depKey);
+                        if (depModule) return loadSingleModule(depModule);
+                        return Promise.resolve();
+                    }));
+                }
+                loadPromises[key] = (async () => {
+                    try {
+                        const module = await import(config.url);
+                        window[key] = module;
+                        loadedModules[key] = module;
+                        return module;
+                    } catch (error) {
+                        console.error(`Error loading module ${config.name}:`, error);
+                        throw error;
+                    }
+                })();
+                return loadPromises[key];
+            };
+            await Promise.all(moduleConfigs.map(config => loadSingleModule(config)));
+            return loadedModules;
+        }
+        window.litechat = {
+            utils: {
+                log: (...args) => console.log(...args),
+                toast: (message) => alert(message),
+                error: (...args) => console.error(...args),
+                warn: (...args) => console.warn(...args),
+                loadModules,
+                loadModule: async (url, name, key, importMap) => (await loadModules([{url, name, globalKey: key, importMap}]))[key || name],
+            },
+            target: litechatTarget,
+            emit: (eventName, payload) => window.dispatchEvent(new CustomEvent(eventName, { detail: payload })),
+        };
+    
+
+        // --- EXECUTE CODE ---
+        try {
+            // Inject the extracted runjs code here
+            // Clear any previous content
+litechat.target.replaceChildren();
+
+async function createShooterGame() {
+    try {
+        // Load the modules with proper import map configuration
+        const modules = await litechat.utils.loadModules([
+            {
+                url: 'https://unpkg.com/three@0.170.0/build/three.module.js',
+                name: 'THREE',
+                globalKey: 'THREE',
+                importMap: {
+                    "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+                    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+                }
+            }
+        ]);
+
+        const { THREE } = modules;
+
+        // Create container
+        const container = document.createElement('div');
+        container.className = 'p-4 bg-gray-900 rounded-lg';
+
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 600;
+        canvas.className = 'border border-gray-600 rounded';
+        container.appendChild(canvas);
+
+        // Add info text
+        const info = document.createElement('div');
+        info.className = 'text-white text-center mt-2';
+        info.textContent = 'Use arrow keys to move, space to shoot';
+        container.appendChild(info);
+
+        litechat.target.appendChild(container);
+
+        // Three.js scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x222222);
+
+        const camera = new THREE.OrthographicCamera(-canvas.width / 2, canvas.width / 2, canvas.height / 2, -canvas.height / 2, 1, 1000);
+        camera.position.set(0, 0, 1);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(canvas.width, canvas.height);
+
+        // Add lights
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        scene.add(ambientLight);
+
+        // Player
+        const playerGeometry = new THREE.BoxGeometry(20, 20, 20);
+        const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
+        const player = new THREE.Mesh(playerGeometry, playerMaterial);
+        player.position.set(0, 0, 0);
+        scene.add(player);
+
+        // Bullets
+        const bulletGeometry = new THREE.BoxGeometry(5, 5, 5);
+        const bulletMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const bullets = [];
+
+        // Enemies
+        const enemyGeometry = new THREE.BoxGeometry(20, 20, 20);
+        const enemyMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+        const enemies = [];
+
+        // Bonus
+        const bonusGeometry = new THREE.BoxGeometry(10, 10, 10);
+        const bonusMaterial = new THREE.MeshLambertMaterial({ color: 0xffff00 });
+        let bonus = null;
+
+        // Game variables
+        let score = 0;
+        let lives = 3;
+        let fireRate = 1;
+        let bouncyFire = 0;
+        let guns = 1;
+        let gunOffset = 0;
+
+        // Keyboard input
+        let keysDown = {};
+        document.addEventListener('keydown', (event) => {
+            keysDown[event.key] = true;
+        });
+        document.addEventListener('keyup', (event) => {
+            keysDown[event.key] = false;
+        });
+
+        // Game loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Move player
+            if (keysDown['ArrowLeft']) {
+                player.position.x -= 5;
+            }
+            if (keysDown['ArrowRight']) {
+                player.position.x += 5;
+            }
+            if (keysDown['ArrowUp']) {
+                player.position.y += 5;
+            }
+            if (keysDown['ArrowDown']) {
+                player.position.y -= 5;
+            }
+
+            // Shoot bullets
+            if (keysDown[' ']) {
+                for (let i = 0; i < guns; i++) {
+                    const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+                    bullet.position.set(player.position.x + gunOffset * (i - guns / 2 + 0.5), player.position.y, 0);
+                    bullets.push(bullet);
+                    scene.add(bullet);
+                }
+                gunOffset = (gunOffset + 5) % 10;
+                setTimeout(() => {
+                    gunOffset = 0;
+                }, 100);
+            }
+
+            // Move bullets
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].position.y += 10;
+                if (bullets[i].position.y > canvas.height / 2) {
+                    scene.remove(bullets[i]);
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // Move enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                enemies[i].position.y += 2;
+                if (enemies[i].position.y > canvas.height / 2) {
+                    scene.remove(enemies[i]);
+                    enemies.splice(i, 1);
+                    lives--;
+                }
+            }
+
+            // Check collisions
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    if (bullets[i].position.distanceTo(enemies[j].position) < 20) {
+                        scene.remove(bullets[i]);
+                        bullets.splice(i, 1);
+                        scene.remove(enemies[j]);
+                        enemies.splice(j, 1);
+                        score++;
+                        if (bouncyFire > 0) {
+                            const newBullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+                            newBullet.position.set(enemies[j].position.x, enemies[j].position.y, 0);
+                            bullets.push(newBullet);
+                            scene.add(newBullet);
+                            bouncyFire--;
+                        }
+                    }
+                }
+            }
+
+            // Add enemies
+            if (Math.random() < 0.05) {
+                const enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+                enemy.position.set(Math.random() * canvas.width - canvas.width / 2, -canvas.height / 2, 0);
+                enemies.push(enemy);
+                scene.add(enemy);
+            }
+
+            // Add bonus
+            if (Math.random() < 0.01 && !bonus) {
+                bonus = new THREE.Mesh(bonusGeometry, bonusMaterial);
+                bonus.position.set(Math.random() * canvas.width - canvas.width / 2, -canvas.height / 2, 0);
+                scene.add(bonus);
+            }
+
+            // Check bonus collision
+            if (bonus && player.position.distanceTo(bonus.position) < 20) {
+                scene.remove(bonus);
+                bonus = null;
+                const bonusType = Math.random();
+                if (bonusType < 0.25) {
+                    fireRate *= 1.1;
+                } else if (bonusType < 0.5) {
+                    bouncyFire = 5;
+                } else if (bonusType < 0.75) {
+                    guns++;
+                } else {
+                    lives++;
+                }
+            }
+
+            // Update renderer
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    } catch (error) {
+        litechat.utils.log('error', '❌ FAILED to create scene:', error.message);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+        errorDiv.textContent = `Error: ${error.message}`;
+        litechat.target.appendChild(errorDiv);
+    }
+}
+createShooterGame();
+        } catch (error) {
+            console.error('Execution error:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+            errorDiv.textContent = 'Execution Error: ' + error.message;
+            document.getElementById('litechat-target').appendChild(errorDiv);
+        }
+    </script>
+</body>
+</html>
