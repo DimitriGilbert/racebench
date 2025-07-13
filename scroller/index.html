@@ -1,934 +1,1410 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LiteChat JS Executable Race</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
-    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/simple-datatables@latest"
+      type="text/javascript"
+    ></script>
     <style>
-        body{background-color:#f0f2f5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
-        
-        /* DataTable wrapper styling */
-        .dataTable-wrapper {
-            background: transparent !important;
-            border: none !important;
-        }
-        
-        /* Table styling */
-        .dataTable-table {
-            width: 100% !important;
-            border-collapse: collapse !important;
-            background: white !important;
-            border-radius: 0.5rem !important;
-            overflow: hidden !important;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
-        }
-        
-        .dark .dataTable-table {
-            background: #374151 !important;
-        }
-        
-        /* Header styling */
-        .dataTable-table thead th {
-            background: #f9fafb !important;
-            padding: 12px 16px !important;
-            text-align: left !important;
-            font-weight: 600 !important;
-            color: #374151 !important;
-            border-bottom: 1px solid #e5e7eb !important;
-            cursor: pointer !important;
-            user-select: none !important;
-        }
-        
-        .dark .dataTable-table thead th {
-            background: #4b5563 !important;
-            color: #f9fafb !important;
-            border-bottom-color: #6b7280 !important;
-        }
-        
-        .dataTable-table thead th:hover {
-            background: #f3f4f6 !important;
-        }
-        
-        .dark .dataTable-table thead th:hover {
-            background: #6b7280 !important;
-        }
-        
-        /* Body styling */
-        .dataTable-table tbody td {
-            padding: 12px 16px !important;
-            border-bottom: 1px solid #f3f4f6 !important;
-            color: #374151 !important;
-        }
-        
-        .dark .dataTable-table tbody td {
-            border-bottom-color: #4b5563 !important;
-            color: #f9fafb !important;
-        }
-        
-        .dataTable-table tbody tr:hover {
-            background: #f9fafb !important;
-        }
-        
-        .dark .dataTable-table tbody tr:hover {
-            background: #4b5563 !important;
-        }
-        
-        /* Sorting arrows */
-        .dataTable-sorter::after {
-            content: " ↕" !important;
-            opacity: 0.3 !important;
-        }
-        
-        .dataTable-sorter.asc::after {
-            content: " ↑" !important;
-            opacity: 1 !important;
-            color: #6366f1 !important;
-        }
-        
-        .dataTable-sorter.desc::after {
-            content: " ↓" !important;
-            opacity: 1 !important;
-            color: #6366f1 !important;
-        }
-        
-        /* Search and controls */
-        .dataTable-top {
-            padding: 1rem 0 !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-        }
-        
-        .dataTable-search input {
-            padding: 0.75rem 1.25rem !important;
-            border: 2px solid #6366f1 !important;
-            border-radius: 0.5rem !important;
-            background: #fff !important;
-            color: #1e293b !important;
-            font-size: 1.1rem !important;
-            font-weight: 500 !important;
-            box-shadow: 0 1px 2px 0 rgba(99,102,241,0.08);
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .dataTable-search input:focus {
-            border-color: #4f46e5 !important;
-            outline: none !important;
-            box-shadow: 0 0 0 2px #6366f1 !important;
-        }
-        .dark .dataTable-search input {
-            background: #1e293b !important;
-            border-color: #818cf8 !important;
-            color: #f9fafb !important;
-        }
-        .dataTable-selector select {
-            padding: 0.75rem 1.25rem !important;
-            border: 2px solid #6366f1 !important;
-            border-radius: 0.5rem !important;
-            background: #fff !important;
-            color: #1e293b !important;
-            font-size: 1.1rem !important;
-            font-weight: 500 !important;
-            margin-left: 1rem !important;
-            box-shadow: 0 1px 2px 0 rgba(99,102,241,0.08);
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .dataTable-selector select:focus {
-            border-color: #4f46e5 !important;
-            outline: none !important;
-            box-shadow: 0 0 0 2px #6366f1 !important;
-        }
-        .dark .dataTable-selector select {
-            background: #1e293b !important;
-            border-color: #818cf8 !important;
-            color: #f9fafb !important;
-        }
-        .dataTable-pagination a {
-            padding: 0.75rem 1.25rem !important;
-            margin: 0 0.25rem !important;
-            border: 2px solid #6366f1 !important;
-            border-radius: 0.5rem !important;
-            background: #fff !important;
-            color: #4f46e5 !important;
-            font-size: 1.1rem !important;
-            font-weight: 600 !important;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-        }
-        .dataTable-pagination a:hover {
-            background: #6366f1 !important;
-            color: #fff !important;
-            border-color: #6366f1 !important;
-        }
-        .dataTable-pagination a.active {
-            background: #4f46e5 !important;
-            color: #fff !important;
-            border-color: #4f46e5 !important;
-        }
-        .dark .dataTable-pagination a {
-            background: #1e293b !important;
-            border-color: #818cf8 !important;
-            color: #a5b4fc !important;
-        }
-        .dark .dataTable-pagination a:hover {
-            background: #818cf8 !important;
-            color: #1e293b !important;
-        }
-        .dark .dataTable-pagination a.active {
-            background: #6366f1 !important;
-            color: #fff !important;
-            border-color: #6366f1 !important;
-        }
+      body {
+        background-color: #f0f2f5;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+      }
+
+      /* DataTable wrapper styling */
+      .dataTable-wrapper {
+        background: transparent !important;
+        border: none !important;
+      }
+
+      /* Table styling */
+      .dataTable-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        background: white !important;
+        border-radius: 0.5rem !important;
+        overflow: hidden !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+      }
+
+      .dark .dataTable-table {
+        background: #374151 !important;
+      }
+
+      /* Header styling */
+      .dataTable-table thead th {
+        background: #f9fafb !important;
+        padding: 12px 16px !important;
+        text-align: left !important;
+        font-weight: 600 !important;
+        color: #374151 !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        cursor: pointer !important;
+        user-select: none !important;
+      }
+
+      .dark .dataTable-table thead th {
+        background: #4b5563 !important;
+        color: #f9fafb !important;
+        border-bottom-color: #6b7280 !important;
+      }
+
+      .dataTable-table thead th:hover {
+        background: #f3f4f6 !important;
+      }
+
+      .dark .dataTable-table thead th:hover {
+        background: #6b7280 !important;
+      }
+
+      /* Body styling */
+      .dataTable-table tbody td {
+        padding: 12px 16px !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+        color: #374151 !important;
+      }
+
+      .dark .dataTable-table tbody td {
+        border-bottom-color: #4b5563 !important;
+        color: #f9fafb !important;
+      }
+
+      .dataTable-table tbody tr:hover {
+        background: #f9fafb !important;
+      }
+
+      .dark .dataTable-table tbody tr:hover {
+        background: #4b5563 !important;
+      }
+
+      /* Sorting arrows */
+      .dataTable-sorter::after {
+        content: " ↕" !important;
+        opacity: 0.3 !important;
+      }
+
+      .dataTable-sorter.asc::after {
+        content: " ↑" !important;
+        opacity: 1 !important;
+        color: #6366f1 !important;
+      }
+
+      .dataTable-sorter.desc::after {
+        content: " ↓" !important;
+        opacity: 1 !important;
+        color: #6366f1 !important;
+      }
+
+      /* Search and controls */
+      .dataTable-top {
+        padding: 1rem 0 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+      }
+
+      .dataTable-search input {
+        padding: 0.75rem 1.25rem !important;
+        border: 2px solid #6366f1 !important;
+        border-radius: 0.5rem !important;
+        background: #fff !important;
+        color: #1e293b !important;
+        font-size: 1.1rem !important;
+        font-weight: 500 !important;
+        box-shadow: 0 1px 2px 0 rgba(99, 102, 241, 0.08);
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      .dataTable-search input:focus {
+        border-color: #4f46e5 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px #6366f1 !important;
+      }
+      .dark .dataTable-search input {
+        background: #1e293b !important;
+        border-color: #818cf8 !important;
+        color: #f9fafb !important;
+      }
+      .dataTable-selector select {
+        padding: 0.75rem 1.25rem !important;
+        border: 2px solid #6366f1 !important;
+        border-radius: 0.5rem !important;
+        background: #fff !important;
+        color: #1e293b !important;
+        font-size: 1.1rem !important;
+        font-weight: 500 !important;
+        margin-left: 1rem !important;
+        box-shadow: 0 1px 2px 0 rgba(99, 102, 241, 0.08);
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      .dataTable-selector select:focus {
+        border-color: #4f46e5 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px #6366f1 !important;
+      }
+      .dark .dataTable-selector select {
+        background: #1e293b !important;
+        border-color: #818cf8 !important;
+        color: #f9fafb !important;
+      }
+      .dataTable-pagination a {
+        padding: 0.75rem 1.25rem !important;
+        margin: 0 0.25rem !important;
+        border: 2px solid #6366f1 !important;
+        border-radius: 0.5rem !important;
+        background: #fff !important;
+        color: #4f46e5 !important;
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        transition: background 0.2s, color 0.2s, border-color 0.2s;
+      }
+      .dataTable-pagination a:hover {
+        background: #6366f1 !important;
+        color: #fff !important;
+        border-color: #6366f1 !important;
+      }
+      .dataTable-pagination a.active {
+        background: #4f46e5 !important;
+        color: #fff !important;
+        border-color: #4f46e5 !important;
+      }
+      .dark .dataTable-pagination a {
+        background: #1e293b !important;
+        border-color: #818cf8 !important;
+        color: #a5b4fc !important;
+      }
+      .dark .dataTable-pagination a:hover {
+        background: #818cf8 !important;
+        color: #1e293b !important;
+      }
+      .dark .dataTable-pagination a.active {
+        background: #6366f1 !important;
+        color: #fff !important;
+        border-color: #6366f1 !important;
+      }
     </style>
-</head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-4 sm:p-6 md:p-8">
-    <div class="max-w-7xl mx-auto container bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-        <div class="header bg-gradient-to-r from-violet-600 to-indigo-600 text-white p-6 sm:p-8 text-center">
-            <h1 class="text-3xl sm:text-4xl font-bold mb-2">🚀 LiteChat JS Executable Race</h1>
-            <p class="text-indigo-200">Comparing code generation capabilities of various models.</p>
+  </head>
+  <body
+    class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-4 sm:p-6 md:p-8"
+  >
+    <div
+      class="max-w-7xl mx-auto container bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden"
+    >
+      <div
+        class="header bg-gradient-to-r from-violet-600 to-indigo-600 text-white p-6 sm:p-8 text-center"
+      >
+        <h1 class="text-3xl sm:text-4xl font-bold mb-2">
+          🚀 LiteChat JS Executable Race
+        </h1>
+        <p class="text-indigo-200">
+          Comparing code generation capabilities of various models.
+        </p>
+      </div>
+      <div class="content p-6 sm:p-8">
+        <div class="prompt-container mb-8">
+          <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
+            Prompt
+          </h2>
+          <div
+            class="markdown-content bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700"
+          >
+            <p class="text-gray-700 dark:text-gray-300">
+              could you create a 2D scroll shooter with 3D effect using a runjs
+              block and three js ?
+            </p>
+            <p class="mt-2 text-gray-700 dark:text-gray-300">
+              Make it colorful and poppy !<br />I want the game area to feel
+              comfy<br />we should have live,<br />random bonus drop:
+            </p>
+            <ul
+              class="list-disc list-inside mt-2 text-gray-700 dark:text-gray-300 space-y-1"
+            >
+              <li>faster fire rate (+10% per bonus)</li>
+              <li>
+                bouncy fire (bounce on killed enemy up to number of bonus time)
+              </li>
+              <li>more gun : 1 - 2 alternate left/right - 3 in |/</li>
+              <li>extra life</li>
+            </ul>
+            <p class="mt-2 text-gray-700 dark:text-gray-300">
+              enemy get faster or stronger other time
+            </p>
+          </div>
         </div>
-        <div class="content p-6 sm:p-8">
-            <div class="prompt-container mb-8">
-                <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">Prompt</h2>
-                <div class="markdown-content bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-700 dark:text-gray-300">could you create a 2D scroll shooter with 3D effect using a runjs block and three js ?</p>
-                    <p class="mt-2 text-gray-700 dark:text-gray-300">Make it colorful and poppy !<br />I want the game area to feel comfy<br />we should have live,<br />random bonus drop:</p>
-                    <ul class="list-disc list-inside mt-2 text-gray-700 dark:text-gray-300 space-y-1">
-                        <li>faster fire rate (+10% per bonus)</li>
-                        <li>bouncy fire (bounce on killed enemy up to number of bonus time)</li>
-                        <li>more gun : 1 - 2 alternate left/right - 3 in |/</li>
-                        <li>extra life</li>
-                    </ul>
-                    <p class="mt-2 text-gray-700 dark:text-gray-300">enemy get faster or stronger other time</p>
-                </div>
-            </div>
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Results</h2>
-                <button id="view-toggle" class="px-3 py-1 text-sm font-medium bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">View as Table</button>
-            </div>
-            <ul id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">claude-sonnet-4</h3>
-                <a href="./claude-sonnet-4.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">24.68 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">23.11 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">6771 / 3392</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">5.31s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">84.01s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">deepseek-r1-0528</h3>
-                <a href="./deepseek-r1-0528.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">16.97 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">15.88 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">7438 / 2801</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">96.39s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">107.17s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">devstral-small</h3>
-                <a href="./devstral-small.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">3.06 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">3.03 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">772 / 2885</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">1.96s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">35.14s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">gemini-2.0-flash-001</h3>
-                <a href="./gemini-2.0-flash-001.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">13.38 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">9.81 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">3364 / 3156</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">757ms</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">16.78s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">gemini-2.5-flash</h3>
-                <a href="./gemini-2.5-flash.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">34.06 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">28.63 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">8967 / 3156</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">1.56s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">55.06s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">gemma-3-27b-it</h3>
-                <a href="./gemma-3-27b-it.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">12.39 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">9.89 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">3031 / 3170</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">3.10s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">102.70s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">gpt-4.1-mini</h3>
-                <a href="./gpt-4.1-mini.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">17.3 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">16.57 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">4464 / 2712</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">1.08s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">101.89s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">gpt-4.1-nano</h3>
-                <a href="./gpt-4.1-nano.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">14.02 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">13.11 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">3647 / 2712</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">911ms</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">98.34s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">gpt-4.1</h3>
-                <a href="./gpt-4.1.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">16.5 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">15.46 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">5087 / 2712</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">2.39s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">102.71s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">kimi-dev-72b</h3>
-                <a href="./kimi-dev-72b.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">27.97 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">8.39 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">6488 / 2738</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">2.87s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">111.88s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">llama-4-scout</h3>
-                <a href="./llama-4-scout.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">7.59 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">7.42 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">1715 / 2706</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">1.10s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">75.66s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">magistral-small-2506</h3>
-                <a href="./magistral-small-2506.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">20.4 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">20.39 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">4955 / 2885</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">623ms</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">77.76s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">mistral-small-3.2-24b-instruct</h3>
-                <a href="./mistral-small-3.2-24b-instruct.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">14.8 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">13.92 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">4367 / 2885</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">3.59s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">123.39s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">qwen3-30b-a3b</h3>
-                <a href="./qwen3-30b-a3b.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">8.77 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">8.76 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">3845 / 2739</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">62.19s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">104.18s</span>
-                </div>
-            </div>
-        </li>
-<li class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">qwen3-32b</h3>
-                <a href="./qwen3-32b.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View Result
-                </a>
-            </div>
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div>
-                    <span class="font-medium">Response Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">12.72 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Code Size:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">11.9 KB</span>
-                </div>
-                <div>
-                    <span class="font-medium">Tokens (Out/In):</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">4639 / 2739</span>
-                </div>
-                <div>
-                    <span class="font-medium">TTFT:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">74.83s</span>
-                </div>
-                <div>
-                    <span class="font-medium">Total Time:</span><br>
-                    <span class="text-gray-900 dark:text-gray-100">109.61s</span>
-                </div>
-            </div>
-        </li></ul>
-            <div id="results-table-container" class="hidden">
-                <table id="results-table">
-                    <thead>
-                        <tr>
-                            <th>Model</th>
-                            <th>Response Size</th>
-                            <th>Code Size</th>
-                            <th>Completion Tokens</th>
-                            <th>Prompt Tokens</th>
-                            <th>TTFT</th>
-                            <th>Total Time</th>
-                        </tr>
-                    </thead>
-                    <tbody><tr>
-            <td><a href="./claude-sonnet-4.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">claude-sonnet-4</a></td>
-            <td data-sort="25269">24.68 KB</td>
-            <td data-sort="23663">23.11 KB</td>
-            <td data-sort="6771">6771</td>
-            <td data-sort="3392">3392</td>
-            <td data-sort="5308">5.31s</td>
-            <td data-sort="84013">84.01s</td>
-        </tr>
-<tr>
-            <td><a href="./deepseek-r1-0528.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">deepseek-r1-0528</a></td>
-            <td data-sort="17377">16.97 KB</td>
-            <td data-sort="16264">15.88 KB</td>
-            <td data-sort="7438">7438</td>
-            <td data-sort="2801">2801</td>
-            <td data-sort="96392">96.39s</td>
-            <td data-sort="107167">107.17s</td>
-        </tr>
-<tr>
-            <td><a href="./devstral-small.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">devstral-small</a></td>
-            <td data-sort="3136">3.06 KB</td>
-            <td data-sort="3103">3.03 KB</td>
-            <td data-sort="772">772</td>
-            <td data-sort="2885">2885</td>
-            <td data-sort="1959">1.96s</td>
-            <td data-sort="35136">35.14s</td>
-        </tr>
-<tr>
-            <td><a href="./gemini-2.0-flash-001.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">gemini-2.0-flash-001</a></td>
-            <td data-sort="13700">13.38 KB</td>
-            <td data-sort="10043">9.81 KB</td>
-            <td data-sort="3364">3364</td>
-            <td data-sort="3156">3156</td>
-            <td data-sort="757">757ms</td>
-            <td data-sort="16781">16.78s</td>
-        </tr>
-<tr>
-            <td><a href="./gemini-2.5-flash.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">gemini-2.5-flash</a></td>
-            <td data-sort="34873">34.06 KB</td>
-            <td data-sort="29312">28.63 KB</td>
-            <td data-sort="8967">8967</td>
-            <td data-sort="3156">3156</td>
-            <td data-sort="1562">1.56s</td>
-            <td data-sort="55057">55.06s</td>
-        </tr>
-<tr>
-            <td><a href="./gemma-3-27b-it.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">gemma-3-27b-it</a></td>
-            <td data-sort="12684">12.39 KB</td>
-            <td data-sort="10124">9.89 KB</td>
-            <td data-sort="3031">3031</td>
-            <td data-sort="3170">3170</td>
-            <td data-sort="3099">3.10s</td>
-            <td data-sort="102704">102.70s</td>
-        </tr>
-<tr>
-            <td><a href="./gpt-4.1-mini.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">gpt-4.1-mini</a></td>
-            <td data-sort="17714">17.3 KB</td>
-            <td data-sort="16966">16.57 KB</td>
-            <td data-sort="4464">4464</td>
-            <td data-sort="2712">2712</td>
-            <td data-sort="1079">1.08s</td>
-            <td data-sort="101889">101.89s</td>
-        </tr>
-<tr>
-            <td><a href="./gpt-4.1-nano.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">gpt-4.1-nano</a></td>
-            <td data-sort="14354">14.02 KB</td>
-            <td data-sort="13428">13.11 KB</td>
-            <td data-sort="3647">3647</td>
-            <td data-sort="2712">2712</td>
-            <td data-sort="911">911ms</td>
-            <td data-sort="98338">98.34s</td>
-        </tr>
-<tr>
-            <td><a href="./gpt-4.1.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">gpt-4.1</a></td>
-            <td data-sort="16900">16.5 KB</td>
-            <td data-sort="15834">15.46 KB</td>
-            <td data-sort="5087">5087</td>
-            <td data-sort="2712">2712</td>
-            <td data-sort="2388">2.39s</td>
-            <td data-sort="102714">102.71s</td>
-        </tr>
-<tr>
-            <td><a href="./kimi-dev-72b.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">kimi-dev-72b</a></td>
-            <td data-sort="28643">27.97 KB</td>
-            <td data-sort="8587">8.39 KB</td>
-            <td data-sort="6488">6488</td>
-            <td data-sort="2738">2738</td>
-            <td data-sort="2868">2.87s</td>
-            <td data-sort="111879">111.88s</td>
-        </tr>
-<tr>
-            <td><a href="./llama-4-scout.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">llama-4-scout</a></td>
-            <td data-sort="7776">7.59 KB</td>
-            <td data-sort="7600">7.42 KB</td>
-            <td data-sort="1715">1715</td>
-            <td data-sort="2706">2706</td>
-            <td data-sort="1104">1.10s</td>
-            <td data-sort="75662">75.66s</td>
-        </tr>
-<tr>
-            <td><a href="./magistral-small-2506.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">magistral-small-2506</a></td>
-            <td data-sort="20890">20.4 KB</td>
-            <td data-sort="20877">20.39 KB</td>
-            <td data-sort="4955">4955</td>
-            <td data-sort="2885">2885</td>
-            <td data-sort="623">623ms</td>
-            <td data-sort="77759">77.76s</td>
-        </tr>
-<tr>
-            <td><a href="./mistral-small-3.2-24b-instruct.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">mistral-small-3.2-24b-instruct</a></td>
-            <td data-sort="15160">14.8 KB</td>
-            <td data-sort="14252">13.92 KB</td>
-            <td data-sort="4367">4367</td>
-            <td data-sort="2885">2885</td>
-            <td data-sort="3592">3.59s</td>
-            <td data-sort="123392">123.39s</td>
-        </tr>
-<tr>
-            <td><a href="./qwen3-30b-a3b.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">qwen3-30b-a3b</a></td>
-            <td data-sort="8984">8.77 KB</td>
-            <td data-sort="8971">8.76 KB</td>
-            <td data-sort="3845">3845</td>
-            <td data-sort="2739">2739</td>
-            <td data-sort="62187">62.19s</td>
-            <td data-sort="104181">104.18s</td>
-        </tr>
-<tr>
-            <td><a href="./qwen3-32b.html" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">qwen3-32b</a></td>
-            <td data-sort="13026">12.72 KB</td>
-            <td data-sort="12190">11.9 KB</td>
-            <td data-sort="4639">4639</td>
-            <td data-sort="2739">2739</td>
-            <td data-sort="74832">74.83s</td>
-            <td data-sort="109609">109.61s</td>
-        </tr></tbody>
-                </table>
-            </div>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200">
+            Results
+          </h2>
+          <button
+            id="view-toggle"
+            class="px-3 py-1 text-sm font-medium bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+          >
+            View as Table
+          </button>
         </div>
-        <div class="footer bg-gray-50 dark:bg-gray-800/50 p-4 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
-            Generated by <strong>LiteChat</strong> • Visit <a href="https://litechat.dbuild.dev" class="text-indigo-600 dark:text-indigo-400 hover:underline">litechat.dbuild.dev</a>
+        <ul
+          id="results-grid"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+        <li
+          class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+        >
+          <div class="flex items-center justify-between mb-4">
+            <h3
+              class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+            >
+              claude-sonnet-4
+            </h3>
+            <a
+              href="./claude-sonnet-4.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              View Result
+            </a>
+          </div>
+          <div
+            class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+          >
+            <div>
+              <span class="font-medium">Response Size:</span><br />
+              <span class="text-gray-900 dark:text-gray-100">24.68 KB</span>
+            </div>
+            <div>
+              <span class="font-medium">Code Size:</span><br />
+              <span class="text-gray-900 dark:text-gray-100">23.11 KB</span>
+            </div>
+            <div>
+              <span class="font-medium">Tokens (Out/In):</span><br />
+              <span class="text-gray-900 dark:text-gray-100"
+                >6771 / 3392</span
+              >
+            </div>
+            <div>
+              <span class="font-medium">TTFT:</span><br />
+              <span class="text-gray-900 dark:text-gray-100">5.31s</span>
+            </div>
+            <div>
+              <span class="font-medium">Total Time:</span><br />
+              <span class="text-gray-900 dark:text-gray-100">84.01s</span>
+            </div>
+          </div>
+        </li>
+        <li
+          class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+        >
+          <div class="flex items-center justify-between mb-4">
+            <h3
+              class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+            >
+              kimi-k2
+            </h3>
+            <a
+              href="./kimi-k2.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              View Result
+            </a>
+          </div>
+          <div
+            class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+          >
+            <div>
+              <span class="font-medium">Response Size:</span><br />
+              <span class="text-gray-900 dark:text-gray-100"></span>
+            </div>
+            <div>
+              <span class="font-medium">Code Size:</span><br />
+              <span class="text-gray-900 dark:text-gray-100"></span>
+            </div>
+            <div>
+              <span class="font-medium">Tokens (Out/In):</span><br />
+              <span class="text-gray-900 dark:text-gray-100"
+                ></span
+              >
+            </div>
+            <div>
+              <span class="font-medium">TTFT:</span><br />
+              <span class="text-gray-900 dark:text-gray-100"></span>
+            </div>
+            <div>
+              <span class="font-medium">Total Time:</span><br />
+              <span class="text-gray-900 dark:text-gray-100"></span>
+            </div>
+          </div>
+        </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                deepseek-r1-0528
+              </h3>
+              <a
+                href="./deepseek-r1-0528.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">16.97 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">15.88 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >7438 / 2801</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">96.39s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">107.17s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                devstral-small
+              </h3>
+              <a
+                href="./devstral-small.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">3.06 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">3.03 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100">772 / 2885</span>
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">1.96s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">35.14s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                gemini-2.0-flash-001
+              </h3>
+              <a
+                href="./gemini-2.0-flash-001.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">13.38 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">9.81 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >3364 / 3156</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">757ms</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">16.78s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                gemini-2.5-flash
+              </h3>
+              <a
+                href="./gemini-2.5-flash.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">34.06 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">28.63 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >8967 / 3156</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">1.56s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">55.06s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                gemma-3-27b-it
+              </h3>
+              <a
+                href="./gemma-3-27b-it.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">12.39 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">9.89 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >3031 / 3170</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">3.10s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">102.70s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                gpt-4.1-mini
+              </h3>
+              <a
+                href="./gpt-4.1-mini.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">17.3 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">16.57 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >4464 / 2712</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">1.08s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">101.89s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                gpt-4.1-nano
+              </h3>
+              <a
+                href="./gpt-4.1-nano.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">14.02 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">13.11 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >3647 / 2712</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">911ms</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">98.34s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                gpt-4.1
+              </h3>
+              <a
+                href="./gpt-4.1.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">16.5 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">15.46 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >5087 / 2712</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">2.39s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">102.71s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                kimi-dev-72b
+              </h3>
+              <a
+                href="./kimi-dev-72b.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">27.97 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">8.39 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >6488 / 2738</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">2.87s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">111.88s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                llama-4-scout
+              </h3>
+              <a
+                href="./llama-4-scout.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">7.59 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">7.42 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >1715 / 2706</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">1.10s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">75.66s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                magistral-small-2506
+              </h3>
+              <a
+                href="./magistral-small-2506.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">20.4 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">20.39 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >4955 / 2885</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">623ms</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">77.76s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                mistral-small-3.2-24b-instruct
+              </h3>
+              <a
+                href="./mistral-small-3.2-24b-instruct.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">14.8 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">13.92 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >4367 / 2885</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">3.59s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">123.39s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                qwen3-30b-a3b
+              </h3>
+              <a
+                href="./qwen3-30b-a3b.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">8.77 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">8.76 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >3845 / 2739</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">62.19s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">104.18s</span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="bg-white dark:bg-gray-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              >
+                qwen3-32b
+              </h3>
+              <a
+                href="./qwen3-32b.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Result
+              </a>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400"
+            >
+              <div>
+                <span class="font-medium">Response Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">12.72 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Code Size:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">11.9 KB</span>
+              </div>
+              <div>
+                <span class="font-medium">Tokens (Out/In):</span><br />
+                <span class="text-gray-900 dark:text-gray-100"
+                  >4639 / 2739</span
+                >
+              </div>
+              <div>
+                <span class="font-medium">TTFT:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">74.83s</span>
+              </div>
+              <div>
+                <span class="font-medium">Total Time:</span><br />
+                <span class="text-gray-900 dark:text-gray-100">109.61s</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <div id="results-table-container" class="hidden">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Response Size</th>
+                <th>Code Size</th>
+                <th>Completion Tokens</th>
+                <th>Prompt Tokens</th>
+                <th>TTFT</th>
+                <th>Total Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <a
+                    href="./claude-sonnet-4.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >claude-sonnet-4</a
+                  >
+                </td>
+                <td data-sort="25269">24.68 KB</td>
+                <td data-sort="23663">23.11 KB</td>
+                <td data-sort="6771">6771</td>
+                <td data-sort="3392">3392</td>
+                <td data-sort="5308">5.31s</td>
+                <td data-sort="84013">84.01s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./kimi-k2.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >Kimi K2</a
+                  >
+                </td>
+                <td data-sort=""></td>
+                <td data-sort=""></td>
+                <td data-sort=""></td>
+                <td data-sort=""></td>
+                <td data-sort=""></td>
+                <td data-sort=""></td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./deepseek-r1-0528.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >deepseek-r1-0528</a
+                  >
+                </td>
+                <td data-sort="17377">16.97 KB</td>
+                <td data-sort="16264">15.88 KB</td>
+                <td data-sort="7438">7438</td>
+                <td data-sort="2801">2801</td>
+                <td data-sort="96392">96.39s</td>
+                <td data-sort="107167">107.17s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./devstral-small.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >devstral-small</a
+                  >
+                </td>
+                <td data-sort="3136">3.06 KB</td>
+                <td data-sort="3103">3.03 KB</td>
+                <td data-sort="772">772</td>
+                <td data-sort="2885">2885</td>
+                <td data-sort="1959">1.96s</td>
+                <td data-sort="35136">35.14s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./gemini-2.0-flash-001.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >gemini-2.0-flash-001</a
+                  >
+                </td>
+                <td data-sort="13700">13.38 KB</td>
+                <td data-sort="10043">9.81 KB</td>
+                <td data-sort="3364">3364</td>
+                <td data-sort="3156">3156</td>
+                <td data-sort="757">757ms</td>
+                <td data-sort="16781">16.78s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./gemini-2.5-flash.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >gemini-2.5-flash</a
+                  >
+                </td>
+                <td data-sort="34873">34.06 KB</td>
+                <td data-sort="29312">28.63 KB</td>
+                <td data-sort="8967">8967</td>
+                <td data-sort="3156">3156</td>
+                <td data-sort="1562">1.56s</td>
+                <td data-sort="55057">55.06s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./gemma-3-27b-it.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >gemma-3-27b-it</a
+                  >
+                </td>
+                <td data-sort="12684">12.39 KB</td>
+                <td data-sort="10124">9.89 KB</td>
+                <td data-sort="3031">3031</td>
+                <td data-sort="3170">3170</td>
+                <td data-sort="3099">3.10s</td>
+                <td data-sort="102704">102.70s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./gpt-4.1-mini.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >gpt-4.1-mini</a
+                  >
+                </td>
+                <td data-sort="17714">17.3 KB</td>
+                <td data-sort="16966">16.57 KB</td>
+                <td data-sort="4464">4464</td>
+                <td data-sort="2712">2712</td>
+                <td data-sort="1079">1.08s</td>
+                <td data-sort="101889">101.89s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./gpt-4.1-nano.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >gpt-4.1-nano</a
+                  >
+                </td>
+                <td data-sort="14354">14.02 KB</td>
+                <td data-sort="13428">13.11 KB</td>
+                <td data-sort="3647">3647</td>
+                <td data-sort="2712">2712</td>
+                <td data-sort="911">911ms</td>
+                <td data-sort="98338">98.34s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./gpt-4.1.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >gpt-4.1</a
+                  >
+                </td>
+                <td data-sort="16900">16.5 KB</td>
+                <td data-sort="15834">15.46 KB</td>
+                <td data-sort="5087">5087</td>
+                <td data-sort="2712">2712</td>
+                <td data-sort="2388">2.39s</td>
+                <td data-sort="102714">102.71s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./kimi-dev-72b.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >kimi-dev-72b</a
+                  >
+                </td>
+                <td data-sort="28643">27.97 KB</td>
+                <td data-sort="8587">8.39 KB</td>
+                <td data-sort="6488">6488</td>
+                <td data-sort="2738">2738</td>
+                <td data-sort="2868">2.87s</td>
+                <td data-sort="111879">111.88s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./llama-4-scout.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >llama-4-scout</a
+                  >
+                </td>
+                <td data-sort="7776">7.59 KB</td>
+                <td data-sort="7600">7.42 KB</td>
+                <td data-sort="1715">1715</td>
+                <td data-sort="2706">2706</td>
+                <td data-sort="1104">1.10s</td>
+                <td data-sort="75662">75.66s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./magistral-small-2506.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >magistral-small-2506</a
+                  >
+                </td>
+                <td data-sort="20890">20.4 KB</td>
+                <td data-sort="20877">20.39 KB</td>
+                <td data-sort="4955">4955</td>
+                <td data-sort="2885">2885</td>
+                <td data-sort="623">623ms</td>
+                <td data-sort="77759">77.76s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./mistral-small-3.2-24b-instruct.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >mistral-small-3.2-24b-instruct</a
+                  >
+                </td>
+                <td data-sort="15160">14.8 KB</td>
+                <td data-sort="14252">13.92 KB</td>
+                <td data-sort="4367">4367</td>
+                <td data-sort="2885">2885</td>
+                <td data-sort="3592">3.59s</td>
+                <td data-sort="123392">123.39s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./qwen3-30b-a3b.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >qwen3-30b-a3b</a
+                  >
+                </td>
+                <td data-sort="8984">8.77 KB</td>
+                <td data-sort="8971">8.76 KB</td>
+                <td data-sort="3845">3845</td>
+                <td data-sort="2739">2739</td>
+                <td data-sort="62187">62.19s</td>
+                <td data-sort="104181">104.18s</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="./qwen3-32b.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-indigo-600 hover:underline font-medium"
+                    >qwen3-32b</a
+                  >
+                </td>
+                <td data-sort="13026">12.72 KB</td>
+                <td data-sort="12190">11.9 KB</td>
+                <td data-sort="4639">4639</td>
+                <td data-sort="2739">2739</td>
+                <td data-sort="74832">74.83s</td>
+                <td data-sort="109609">109.61s</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+      </div>
+      <div
+        class="footer bg-gray-50 dark:bg-gray-800/50 p-4 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400"
+      >
+        Generated by <strong>LiteChat</strong> • Visit
+        <a
+          href="https://litechat.dbuild.dev"
+          class="text-indigo-600 dark:text-indigo-400 hover:underline"
+          >litechat.dbuild.dev</a
+        >
+      </div>
     </div>
     <script>
-        console.log('🚀 Script loading...');
-        console.log('simpleDatatables available:', typeof simpleDatatables);
-        console.log('DataTable constructor:', typeof simpleDatatables?.DataTable);
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🎯 DOM Content Loaded');
-            
-            let dataTable = null;
-            const btn = document.getElementById('view-toggle');
-            const grid = document.getElementById('results-grid');
-            const tableContainer = document.getElementById('results-table-container');
-            const table = document.getElementById('results-table');
-            
-            console.log('Elements found:', {
-                btn: !!btn,
-                grid: !!grid,
-                tableContainer: !!tableContainer,
-                table: !!table
+      console.log("🚀 Script loading...");
+      console.log("simpleDatatables available:", typeof simpleDatatables);
+      console.log("DataTable constructor:", typeof simpleDatatables?.DataTable);
+
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("🎯 DOM Content Loaded");
+
+        let dataTable = null;
+        const btn = document.getElementById("view-toggle");
+        const grid = document.getElementById("results-grid");
+        const tableContainer = document.getElementById(
+          "results-table-container"
+        );
+        const table = document.getElementById("results-table");
+
+        console.log("Elements found:", {
+          btn: !!btn,
+          grid: !!grid,
+          tableContainer: !!tableContainer,
+          table: !!table,
+        });
+
+        function initDataTable() {
+          console.log("🔄 initDataTable called");
+          try {
+            if (dataTable) {
+              console.log("🗑️ Destroying existing DataTable");
+              dataTable.destroy();
+              dataTable = null;
+            }
+
+            console.log("📊 Table element:", table);
+            console.log(
+              "📊 Table rows:",
+              table?.querySelectorAll("tbody tr")?.length
+            );
+
+            if (!table) {
+              throw new Error("Table element not found!");
+            }
+
+            if (!simpleDatatables?.DataTable) {
+              throw new Error("simpleDatatables.DataTable not available!");
+            }
+
+            console.log("⚡ Creating new DataTable...");
+            dataTable = new simpleDatatables.DataTable(table, {
+              searchable: true,
+              sortable: true,
+              perPage: 25,
+              perPageSelect: [10, 25, 50, 100],
+              fixedHeight: false,
+              labels: {
+                placeholder: "Search models...",
+                perPage: "Show {select} models per page",
+                noRows: "No models found",
+                info: "Showing {start} to {end} of {rows} models",
+              },
             });
-            
-            function initDataTable() {
-                console.log('🔄 initDataTable called');
-                try {
-                    if (dataTable) {
-                        console.log('🗑️ Destroying existing DataTable');
-                        dataTable.destroy();
-                        dataTable = null;
-                    }
-                    
-                    console.log('📊 Table element:', table);
-                    console.log('📊 Table rows:', table?.querySelectorAll('tbody tr')?.length);
-                    
-                    if (!table) {
-                        throw new Error('Table element not found!');
-                    }
-                    
-                    if (!simpleDatatables?.DataTable) {
-                        throw new Error('simpleDatatables.DataTable not available!');
-                    }
-                    
-                    console.log('⚡ Creating new DataTable...');
-                    dataTable = new simpleDatatables.DataTable(table, {
-                        searchable: true,
-                        sortable: true,
-                        perPage: 25,
-                        perPageSelect: [10, 25, 50, 100],
-                        fixedHeight: false,
-                        labels: {
-                            placeholder: "Search models...",
-                            perPage: "Show {select} models per page",
-                            noRows: "No models found",
-                            info: "Showing {start} to {end} of {rows} models"
-                        }
-                    });
-                    
-                    console.log('✅ DataTable initialized successfully!', dataTable);
-                    
-                    // Add event listeners for debugging
-                    dataTable.on('datatable.init', () => console.log('📊 DataTable init event fired'));
-                    dataTable.on('datatable.refresh', () => console.log('🔄 DataTable refresh event fired'));
-                    dataTable.on('datatable.sort', (column, direction) => console.log('🔀 DataTable sort:', column, direction));
-                    
-                } catch (error) {
-                    console.error('❌ Error initializing DataTable:', error);
-                    console.error('Stack trace:', error.stack);
-                    
-                    // Show error in UI
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4';
-                    errorDiv.innerHTML = 'DataTable Error: ' + error.message;
-                    tableContainer.insertBefore(errorDiv, table);
-                }
-            }
-            
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    console.log('🔘 Toggle button clicked');
-                    const isCurrentlyGrid = !grid.classList.contains('hidden');
-                    console.log('Currently showing grid:', isCurrentlyGrid);
-                    
-                    if (isCurrentlyGrid) {
-                        // Switching FROM grid TO table
-                        console.log('🔄 Switching to table view, initializing DataTable...');
-                        grid.classList.add('hidden');
-                        tableContainer.classList.remove('hidden');
-                        btn.textContent = 'View as Grid';
-                        
-                        setTimeout(() => {
-                            console.log('⏰ Timeout fired, calling initDataTable');
-                            initDataTable();
-                        }, 100);
-                    } else {
-                        // Switching FROM table TO grid
-                        console.log('🔄 Switching to grid view');
-                        tableContainer.classList.add('hidden');
-                        grid.classList.remove('hidden');
-                        btn.textContent = 'View as Table';
-                        
-                        if (dataTable) {
-                            console.log('🗑️ Destroying DataTable for grid view');
-                            dataTable.destroy();
-                            dataTable = null;
-                        }
-                    }
-                });
+
+            console.log("✅ DataTable initialized successfully!", dataTable);
+
+            // Add event listeners for debugging
+            dataTable.on("datatable.init", () =>
+              console.log("📊 DataTable init event fired")
+            );
+            dataTable.on("datatable.refresh", () =>
+              console.log("🔄 DataTable refresh event fired")
+            );
+            dataTable.on("datatable.sort", (column, direction) =>
+              console.log("🔀 DataTable sort:", column, direction)
+            );
+          } catch (error) {
+            console.error("❌ Error initializing DataTable:", error);
+            console.error("Stack trace:", error.stack);
+
+            // Show error in UI
+            const errorDiv = document.createElement("div");
+            errorDiv.className =
+              "bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4";
+            errorDiv.innerHTML = "DataTable Error: " + error.message;
+            tableContainer.insertBefore(errorDiv, table);
+          }
+        }
+
+        if (btn) {
+          btn.addEventListener("click", () => {
+            console.log("🔘 Toggle button clicked");
+            const isCurrentlyGrid = !grid.classList.contains("hidden");
+            console.log("Currently showing grid:", isCurrentlyGrid);
+
+            if (isCurrentlyGrid) {
+              // Switching FROM grid TO table
+              console.log(
+                "🔄 Switching to table view, initializing DataTable..."
+              );
+              grid.classList.add("hidden");
+              tableContainer.classList.remove("hidden");
+              btn.textContent = "View as Grid";
+
+              setTimeout(() => {
+                console.log("⏰ Timeout fired, calling initDataTable");
+                initDataTable();
+              }, 100);
             } else {
-                console.error('❌ Toggle button not found!');
+              // Switching FROM table TO grid
+              console.log("🔄 Switching to grid view");
+              tableContainer.classList.add("hidden");
+              grid.classList.remove("hidden");
+              btn.textContent = "View as Table";
+
+              if (dataTable) {
+                console.log("🗑️ Destroying DataTable for grid view");
+                dataTable.destroy();
+                dataTable = null;
+              }
             }
-            
-            console.log('🎉 Script setup complete');
-        });
-        
-        // Also try to initialize on window load as backup
-        window.addEventListener('load', function() {
-            console.log('🌐 Window load event fired');
-        });
+          });
+        } else {
+          console.error("❌ Toggle button not found!");
+        }
+
+        console.log("🎉 Script setup complete");
+      });
+
+      // Also try to initialize on window load as backup
+      window.addEventListener("load", function () {
+        console.log("🌐 Window load event fired");
+      });
     </script>
-</body>
+  </body>
 </html>
