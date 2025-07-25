@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gemini-2.5-pro - LiteChat Race Result</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button { 
+            transition: all 0.2s ease-in-out; 
+            border-bottom: 2px solid transparent; 
+        }
+        .tab-button.active { 
+            border-bottom-color: hsl(var(--primary)); 
+            color: hsl(var(--primary)); 
+            background-color: hsl(var(--muted)); 
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-8">
+    <div class="max-w-7xl mx-auto container bg-card rounded-2xl shadow-lg overflow-hidden border border-border">
+        <div class="header bg-card border-b border-border p-6 sm:p-8 text-center">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-3xl sm:text-4xl font-bold text-card-foreground">🚀 gemini-2.5-pro</h1>
+                <button id="theme-toggle" class="p-2 rounded-md border border-border bg-muted hover:bg-muted/80">
+                    <span class="dark:hidden">🌙</span>
+                    <span class="hidden dark:inline">☀️</span>
+                </button>
+            </div>
+            <p class="text-muted-foreground">LiteChat Model Race Result (RUNJS)</p>
+        </div>
+        
+        
+        
+        <div class="p-4 sm:p-6">
+            <div class="border-b border-border mb-4">
+                <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                    
+                        <button class="tab-button active hover:text-primary/80 whitespace-nowrap py-3 px-4 font-medium text-sm rounded-t-md" data-tab="preview">Live Preview</button>
+                        <button class="tab-button hover:text-primary/80 whitespace-nowrap py-3 px-4 font-medium text-sm rounded-t-md" data-tab="raw">Raw Response</button>
+                    
+                </nav>
+            </div>
+
+            
+                <div id="preview" class="tab-content active">
+                    <div id="litechat-target" class="w-full min-h-[600px] bg-muted/50 rounded-lg p-4 border border-border"></div>
+                </div>
+            
+
+            <div id="raw" class="tab-content">
+                <div class="w-full min-h-[600px] bg-gray-900 text-white rounded-lg p-4 overflow-x-auto font-mono">
+                    <pre class="whitespace-pre-wrap text-sm"><code>Of course! This is a fantastic idea. Creating a 2D-style game in a 3D engine like Three.js allows for cool effects like perspective, lighting, and particle explosions that give it a unique "2.5D" feel.
+
+Here is a complete, runnable `runjs` block that sets up a colorful and poppy scroll shooter with all the features you requested.
+
+### Features Included:
+*   **3D-in-2D Gameplay:** The game plays on a 2D plane, but uses a `PerspectiveCamera` and 3D objects for a great visual effect.
+*   **Player Controls:** Move with `W`, `A`, `S`, `D` and fire with `Spacebar`.
+*   **Lives System:** You start with 3 lives.
+*   **Scoring:** Get points for every enemy destroyed.
+*   **Random Bonus Drops:** Defeated enemies have a chance to drop a power-up.
+*   **Power-ups:**
+    *   **Rapid Fire (Cyan):** Increases fire rate by 10% each time.
+    *   **Multi-Gun (Magenta):** Cycles from 1 -&gt; 2 -&gt; 3 cannons.
+    *   **Bouncy Shots (Yellow):** Bullets bounce to the nearest enemy on a kill.
+    *   **Extra Life (Green):** Grants an additional life.
+*   **Dynamic Difficulty:** Enemies spawn faster over time.
+*   **"Poppy" Effects:** Colorful explosions and glowing materials make the game feel vibrant and alive.
+
+Just copy the code block below and it will run directly.
+
+```runjs
+// Clear the target element to start fresh
+litechat.target.replaceChildren();
+
+async function createShooterGame() {
+    try {
+        // --- 1. Load Three.js ---
+        litechat.utils.log('info', 'Loading Three.js...');
+        const { THREE } = await litechat.utils.loadModules([{
+            url: 'https://unpkg.com/three@0.160.0/build/three.module.js',
+            name: 'THREE',
+            globalKey: 'THREE'
+        }]);
+        litechat.utils.log('info', 'Three.js loaded successfully!');
+
+        // --- 2. DOM & UI Setup ---
+        const container = document.createElement('div');
+        container.className = 'relative bg-slate-900 p-4 rounded-lg shadow-xl border border-slate-700';
+        container.style.width = '800px';
+        container.style.height = '650px';
+
+        const canvas = document.createElement('canvas');
+        container.appendChild(canvas);
+
+        const uiOverlay = document.createElement('div');
+        uiOverlay.className = 'absolute top-0 left-0 p-6 text-white font-mono text-lg flex justify-between w-full pointer-events-none';
+        uiOverlay.innerHTML = `
+            &lt;div id="score-display"&gt;SCORE: 0&lt;/div&gt;
+            &lt;div id="lives-display"&gt;LIVES: 💚💚💚&lt;/div&gt;
+        `;
+        container.appendChild(uiOverlay);
+        
+        const powerupOverlay = document.createElement('div');
+        powerupOverlay.className = 'absolute bottom-0 left-0 p-6 text-white font-mono text-sm pointer-events-none';
+        powerupOverlay.id = 'powerup-display';
+        container.appendChild(powerupOverlay);
+
+        const gameOverScreen = document.createElement('div');
+        gameOverScreen.id = 'game-over-screen';
+        gameOverScreen.className = 'absolute inset-0 bg-black bg-opacity-70 flex-col items-center justify-center text-white font-mono hidden';
+        gameOverScreen.innerHTML = `
+            &lt;h2 class="text-6xl mb-4"&gt;GAME OVER&lt;/h2&gt;
+            &lt;p id="final-score" class="text-3xl mb-8"&gt;&lt;/p&gt;
+            &lt;button id="restart-button" class="px-6 py-3 bg-indigo-600 rounded-lg text-xl hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"&gt;RESTART&lt;/button&gt;
+        `;
+        container.appendChild(gameOverScreen);
+
+        litechat.target.appendChild(container);
+
+        // --- 3. Game Constants & State ---
+        const gameBounds = { x: 22, z: 30 };
+        const clock = new THREE.Clock();
+        
+        let gameState;
+
+        function initializeGameState() {
+            gameState = {
+                score: 0,
+                lives: 3,
+                gameOver: false,
+                player: null,
+                bullets: [],
+                enemies: [],
+                bonuses: [],
+                particles: [],
+                fireCooldown: 0,
+                enemySpawnTimer: 2, // Start spawning after 2 seconds
+                powerups: {
+                    fireRate: 0, // times collected
+                    gunLevel: 1, // 1, 2, or 3
+                    bounce: 0, // times collected
+                }
+            };
+        }
+
+        const BONUS_TYPES = {
+            RAPID_FIRE: { color: 0x00ffff, name: 'Rapid Fire' },
+            MULTI_GUN: { color: 0xff00ff, name: 'Multi-Gun' },
+            BOUNCE: { color: 0xffff00, name: 'Bouncy Shot' },
+            EXTRA_LIFE: { color: 0x00ff00, name: 'Extra Life' },
+        };
+
+        // --- 4. Three.js Scene Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+        camera.position.set(0, 35, 10); // Angled top-down view
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(736, 586);
+        renderer.setClearColor(0x111827); // Match bg-slate-900
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x606080, 1.5);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+        directionalLight.position.set(5, 10, 7);
+        scene.add(directionalLight);
+
+        // Game Floor
+        const floorGeo = new THREE.PlaneGeometry(gameBounds.x * 1.5, gameBounds.z * 1.5);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b }); // slate-800
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+
+        // --- 5. Game Object Creation ---
+        function createPlayer() {
+            const geo = new THREE.ConeGeometry(0.8, 2, 8);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x4f46e5, emissive: 0x3b82f6, metalness: 0.3, roughness: 0.5 });
+            const player = new THREE.Mesh(geo, mat);
+            player.rotation.x = Math.PI / 2;
+            player.position.set(0, 0, gameBounds.z / 2 - 5);
+            scene.add(player);
+            gameState.player = player;
+        }
+
+        function createBullet(pos, vel, bounceCount) {
+            const geo = new THREE.SphereGeometry(0.3, 8, 8);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xfb923c, emissive: 0xf97316 });
+            const bullet = new THREE.Mesh(geo, mat);
+            bullet.position.copy(pos);
+            bullet.velocity = vel;
+            bullet.bounceCount = bounceCount;
+            scene.add(bullet);
+            gameState.bullets.push(bullet);
+        }
+
+        function createEnemy() {
+            const geo = new THREE.IcosahedronGeometry(1, 0);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xdc2626, metalness: 0.2, roughness: 0.6});
+            const enemy = new THREE.Mesh(geo, mat);
+            enemy.position.set(
+                (Math.random() - 0.5) * gameBounds.x,
+                0,
+                -gameBounds.z / 2 - 5
+            );
+            enemy.velocity = new THREE.Vector3(0, 0, 2 + gameState.score / 200); // Speed increases with score
+            scene.add(enemy);
+            gameState.enemies.push(enemy);
+        }
+
+        function createBonus(pos, type) {
+            const geo = new THREE.TetrahedronGeometry(0.7, 0);
+            const mat = new THREE.MeshStandardMaterial({ color: type.color, emissive: type.color, emissiveIntensity: 0.5 });
+            const bonus = new THREE.Mesh(geo, mat);
+            bonus.position.copy(pos);
+            bonus.velocity = new THREE.Vector3(0, 0, 3);
+            bonus.type = type;
+            bonus.rotationSpeed = new THREE.Vector3(Math.random(), Math.random(), Math.random());
+            scene.add(bonus);
+            gameState.bonuses.push(bonus);
+        }
+        
+        function createExplosion(pos, color) {
+            for (let i = 0; i &lt; 20; i++) {
+                const geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+                const mat = new THREE.MeshBasicMaterial({ color });
+                const particle = new THREE.Mesh(geo, mat);
+                particle.position.copy(pos);
+                particle.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 15,
+                    (Math.random() - 0.5) * 15,
+                    (Math.random() - 0.5) * 15
+                );
+                particle.lifespan = 0.5;
+                scene.add(particle);
+                gameState.particles.push(particle);
+            }
+        }
+
+        // --- 6. Input Handling ---
+        const keys = {};
+        document.addEventListener('keydown', (e) =&gt; keys[e.code] = true);
+        document.addEventListener('keyup', (e) =&gt; keys[e.code] = false);
+
+        // --- 7. Game Logic ---
+        function updatePlayer(delta) {
+            if (!gameState.player) return;
+            const speed = 15;
+            if (keys['KeyW'] || keys['ArrowUp']) gameState.player.position.z -= speed * delta;
+            if (keys['KeyS'] || keys['ArrowDown']) gameState.player.position.z += speed * delta;
+            if (keys['KeyA'] || keys['ArrowLeft']) gameState.player.position.x -= speed * delta;
+            if (keys['KeyD'] || keys['ArrowRight']) gameState.player.position.x += speed * delta;
+
+            // Clamp position
+            gameState.player.position.x = Math.max(-gameBounds.x / 2, Math.min(gameBounds.x / 2, gameState.player.position.x));
+            gameState.player.position.z = Math.max(-gameBounds.z / 2, Math.min(gameBounds.z / 2, gameState.player.position.z));
+            
+            // Firing
+            gameState.fireCooldown -= delta;
+            if (keys['Space'] && gameState.fireCooldown &lt;= 0) {
+                const fireRate = 0.3 / (1 + gameState.powerups.fireRate * 0.1);
+                gameState.fireCooldown = fireRate;
+                const bulletSpeed = 40;
+                const bounceCount = gameState.powerups.bounce;
+                const p_pos = gameState.player.position;
+
+                // Level 1: Single gun
+                if (gameState.powerups.gunLevel === 1) {
+                    createBullet(p_pos.clone(), new THREE.Vector3(0, 0, -bulletSpeed), bounceCount);
+                }
+                // Level 2: Dual guns
+                else if (gameState.powerups.gunLevel === 2) {
+                    createBullet(p_pos.clone().add(new THREE.Vector3(-0.5, 0, 0)), new THREE.Vector3(0, 0, -bulletSpeed), bounceCount);
+                    createBullet(p_pos.clone().add(new THREE.Vector3(0.5, 0, 0)), new THREE.Vector3(0, 0, -bulletSpeed), bounceCount);
+                }
+                // Level 3: Spread shot
+                else {
+                    const angle = Math.PI / 9; // 20 degrees
+                    createBullet(p_pos.clone(), new THREE.Vector3(0, 0, -bulletSpeed), bounceCount);
+                    createBullet(p_pos.clone(), new THREE.Vector3(-Math.sin(angle) * bulletSpeed, 0, -Math.cos(angle) * bulletSpeed), bounceCount);
+                    createBullet(p_pos.clone(), new THREE.Vector3(Math.sin(angle) * bulletSpeed, 0, -Math.cos(angle) * bulletSpeed), bounceCount);
+                }
+            }
+        }
+
+        function updateObjects(delta) {
+            // Update bullets
+            for (let i = gameState.bullets.length - 1; i &gt;= 0; i--) {
+                const b = gameState.bullets[i];
+                b.position.add(b.velocity.clone().multiplyScalar(delta));
+                if (b.position.z &lt; -gameBounds.z / 2 - 10) {
+                    scene.remove(b);
+                    gameState.bullets.splice(i, 1);
+                }
+            }
+            // Update enemies
+            for (let i = gameState.enemies.length - 1; i &gt;= 0; i--) {
+                const e = gameState.enemies[i];
+                e.position.add(e.velocity.clone().multiplyScalar(delta));
+                e.rotation.x += 0.5 * delta;
+                e.rotation.y += 0.5 * delta;
+                if (e.position.z &gt; gameBounds.z / 2 + 5) {
+                    scene.remove(e);
+                    gameState.enemies.splice(i, 1);
+                }
+            }
+            // Update bonuses
+            for (let i = gameState.bonuses.length - 1; i &gt;= 0; i--) {
+                const b = gameState.bonuses[i];
+                b.position.add(b.velocity.clone().multiplyScalar(delta));
+                b.rotation.x += b.rotationSpeed.x * delta;
+                b.rotation.y += b.rotationSpeed.y * delta;
+                if (b.position.z &gt; gameBounds.z / 2 + 5) {
+                    scene.remove(b);
+                    gameState.bonuses.splice(i, 1);
+                }
+            }
+            // Update particles
+            for (let i = gameState.particles.length - 1; i &gt;= 0; i--) {
+                const p = gameState.particles[i];
+                p.position.add(p.velocity.clone().multiplyScalar(delta));
+                p.lifespan -= delta;
+                if (p.lifespan &lt;= 0) {
+                    scene.remove(p);
+                    gameState.particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function handleCollisions() {
+            // Bullet -&gt; Enemy
+            for (let i = gameState.bullets.length - 1; i &gt;= 0; i--) {
+                const bullet = gameState.bullets[i];
+                for (let j = gameState.enemies.length - 1; j &gt;= 0; j--) {
+                    const enemy = gameState.enemies[j];
+                    if (bullet.position.distanceTo(enemy.position) &lt; 1.5) {
+                        createExplosion(enemy.position, enemy.material.color);
+                        
+                        // Bounce logic
+                        if (bullet.bounceCount &gt; 0) {
+                            let closestEnemy = null;
+                            let minDistance = Infinity;
+                            gameState.enemies.forEach((otherEnemy, index) =&gt; {
+                                if (j !== index) {
+                                    const dist = enemy.position.distanceTo(otherEnemy.position);
+                                    if (dist &lt; minDistance) {
+                                        minDistance = dist;
+                                        closestEnemy = otherEnemy;
+                                    }
+                                }
+                            });
+                            if (closestEnemy) {
+                                const direction = new THREE.Vector3().subVectors(closestEnemy.position, enemy.position).normalize();
+                                createBullet(enemy.position, direction.multiplyScalar(40), bullet.bounceCount - 1);
+                            }
+                        }
+
+                        // Remove collided objects
+                        scene.remove(enemy);
+                        gameState.enemies.splice(j, 1);
+                        scene.remove(bullet);
+                        gameState.bullets.splice(i, 1);
+                        
+                        // Update score & drop bonus
+                        gameState.score += 100;
+                        if (Math.random() &lt; 0.25) { // 25% chance to drop bonus
+                            const bonusTypes = Object.values(BONUS_TYPES);
+                            const randomType = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
+                            createBonus(enemy.position, randomType);
+                        }
+                        break; // Bullet can only hit one enemy
+                    }
+                }
+            }
+            
+            if (!gameState.player) return;
+
+            // Player -&gt; Enemy
+            for (let i = gameState.enemies.length - 1; i &gt;= 0; i--) {
+                const enemy = gameState.enemies[i];
+                if (gameState.player.position.distanceTo(enemy.position) &lt; 1.8) {
+                    scene.remove(enemy);
+                    gameState.enemies.splice(i, 1);
+                    playerHit();
+                }
+            }
+            
+            // Player -&gt; Bonus
+            for (let i = gameState.bonuses.length - 1; i &gt;= 0; i--) {
+                const bonus = gameState.bonuses[i];
+                if (gameState.player.position.distanceTo(bonus.position) &lt; 1.8) {
+                    applyBonus(bonus.type);
+                    scene.remove(bonus);
+                    gameState.bonuses.splice(i, 1);
+                }
+            }
+        }
+
+        function playerHit() {
+            gameState.lives--;
+            createExplosion(gameState.player.position, gameState.player.material.color);
+            if (gameState.lives &lt;= 0) {
+                endGame();
+            } else {
+                // Reset player position and powerups
+                gameState.player.position.set(0, 0, gameBounds.z / 2 - 5);
+                gameState.powerups = { fireRate: 0, gunLevel: 1, bounce: 0 };
+            }
+        }
+        
+        function applyBonus(type) {
+            switch(type) {
+                case BONUS_TYPES.RAPID_FIRE:
+                    gameState.powerups.fireRate++;
+                    break;
+                case BONUS_TYPES.MULTI_GUN:
+                    if (gameState.powerups.gunLevel &lt; 3) gameState.powerups.gunLevel++;
+                    break;
+                case BONUS_TYPES.BOUNCE:
+                    gameState.powerups.bounce++;
+                    break;
+                case BONUS_TYPES.EXTRA_LIFE:
+                    gameState.lives++;
+                    break;
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score-display').textContent = `SCORE: ${gameState.score}`;
+            document.getElementById('lives-display').innerHTML = `LIVES: ${'💚'.repeat(gameState.lives)}`;
+
+            const pu = gameState.powerups;
+            let powerupText = [];
+            if (pu.fireRate &gt; 0) powerupText.push(`Rapid Fire x${pu.fireRate} &lt;span style="color:${BONUS_TYPES.RAPID_FIRE.color.toString(16)}"&gt;■&lt;/span&gt;`);
+            if (pu.gunLevel &gt; 1) powerupText.push(`Multi-Gun Lvl ${pu.gunLevel} &lt;span style="color:${BONUS_TYPES.MULTI_GUN.color.toString(16)}"&gt;■&lt;/span&gt;`);
+            if (pu.bounce &gt; 0) powerupText.push(`Bouncy x${pu.bounce} &lt;span style="color:${BONUS_TYPES.BOUNCE.color.toString(16)}"&gt;■&lt;/span&gt;`);
+            document.getElementById('powerup-display').innerHTML = powerupText.join(' | ');
+        }
+
+        function spawnEnemies(delta) {
+            gameState.enemySpawnTimer -= delta;
+            if (gameState.enemySpawnTimer &lt;= 0) {
+                createEnemy();
+                // Spawn faster over time, but with a minimum spawn time
+                gameState.enemySpawnTimer = Math.max(0.3, 2 - gameState.score / 1000);
+            }
+        }
+
+        function endGame() {
+            gameState.gameOver = true;
+            if(gameState.player) scene.remove(gameState.player);
+            gameState.player = null;
+            document.getElementById('final-score').textContent = `FINAL SCORE: ${gameState.score}`;
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            document.getElementById('game-over-screen').classList.add('flex');
+        }
+
+        function cleanupScene() {
+            [...gameState.bullets, ...gameState.enemies, ...gameState.bonuses, ...gameState.particles].forEach(obj =&gt; scene.remove(obj));
+            if(gameState.player) scene.remove(gameState.player);
+        }
+
+        function startGame() {
+            cleanupScene();
+            initializeGameState();
+            createPlayer();
+            document.getElementById('game-over-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.remove('flex');
+            animate();
+        }
+        
+        document.getElementById('restart-button').onclick = startGame;
+
+        // --- 8. Animation Loop ---
+        function animate() {
+            if (gameState.gameOver) return;
+
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            updatePlayer(delta);
+            updateObjects(delta);
+            handleCollisions();
+            spawnEnemies(delta);
+            updateUI();
+            
+            renderer.render(scene, camera);
+        }
+        
+        // --- Initial Start ---
+        startGame();
+
+    } catch (error) {
+        litechat.utils.log('error', 'Failed to create game:', error);
+        litechat.target.innerHTML = `&lt;div class="p-4 text-red-500"&gt;Error loading game assets. Please check the console.&lt;/div&gt;`;
+    }
+}
+
+createShooterGame();
+```</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer bg-muted/50 p-4 border-t border-border text-center text-sm text-muted-foreground">
+            Generated by <strong>LiteChat</strong> • <a href="./index.html" class="text-primary hover:underline">Back to Main Page</a>
+        </div>
+    </div>
+
+    <script type="module">
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        themeToggle?.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        });
+        
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        }
+
+        // Tab switching logic
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const tabId = button.dataset.tab;
+                tabContents.forEach(content => content.id === tabId ? content.classList.add('active') : content.classList.remove('active'));
+            });
+        });
+        
+        
+        // --- LITECHAT MOCK API ---
+        
+        const litechatTarget = document.getElementById('litechat-target');
+        async function loadModules(moduleConfigs) {
+            const loadedModules = {};
+            const loadPromises = {};
+            const globalImportMap = {};
+            moduleConfigs.forEach(config => {
+                if (config.importMap) Object.assign(globalImportMap, config.importMap);
+            });
+            const existingMap = document.querySelector('script[type="importmap"]');
+            if (existingMap) existingMap.remove();
+            if (Object.keys(globalImportMap).length > 0) {
+                const mapScript = document.createElement('script');
+                mapScript.type = 'importmap';
+                mapScript.textContent = JSON.stringify({ imports: globalImportMap });
+                document.head.appendChild(mapScript);
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            const loadSingleModule = async (config) => {
+                const key = config.globalKey || config.name;
+                if (window[key]) return window[key];
+                if (key in loadPromises) return loadPromises[key];
+                if (config.dependencies) {
+                    await Promise.all(config.dependencies.map(depKey => {
+                        const depModule = moduleConfigs.find(m => (m.globalKey || m.name) === depKey);
+                        if (depModule) return loadSingleModule(depModule);
+                        return Promise.resolve();
+                    }));
+                }
+                loadPromises[key] = (async () => {
+                    try {
+                        const module = await import(config.url);
+                        window[key] = module;
+                        loadedModules[key] = module;
+                        return module;
+                    } catch (error) {
+                        console.error(`Error loading module ${config.name}:`, error);
+                        throw error;
+                    }
+                })();
+                return loadPromises[key];
+            };
+            await Promise.all(moduleConfigs.map(config => loadSingleModule(config)));
+            return loadedModules;
+        }
+        window.litechat = {
+            utils: {
+                log: (...args) => console.log(...args),
+                toast: (message) => alert(message),
+                error: (...args) => console.error(...args),
+                warn: (...args) => console.warn(...args),
+                loadModules,
+                loadModule: async (url, name, key, importMap) => (await loadModules([{url, name, globalKey: key, importMap}]))[key || name],
+            },
+            target: litechatTarget,
+            emit: (eventName, payload) => window.dispatchEvent(new CustomEvent(eventName, { detail: payload })),
+        };
+    
+
+        // --- EXECUTE CODE ---
+        try {
+            // Clear the target element to start fresh
+litechat.target.replaceChildren();
+
+async function createShooterGame() {
+    try {
+        // --- 1. Load Three.js ---
+        litechat.utils.log('info', 'Loading Three.js...');
+        const { THREE } = await litechat.utils.loadModules([{
+            url: 'https://unpkg.com/three@0.160.0/build/three.module.js',
+            name: 'THREE',
+            globalKey: 'THREE'
+        }]);
+        litechat.utils.log('info', 'Three.js loaded successfully!');
+
+        // --- 2. DOM & UI Setup ---
+        const container = document.createElement('div');
+        container.className = 'relative bg-slate-900 p-4 rounded-lg shadow-xl border border-slate-700';
+        container.style.width = '800px';
+        container.style.height = '650px';
+
+        const canvas = document.createElement('canvas');
+        container.appendChild(canvas);
+
+        const uiOverlay = document.createElement('div');
+        uiOverlay.className = 'absolute top-0 left-0 p-6 text-white font-mono text-lg flex justify-between w-full pointer-events-none';
+        uiOverlay.innerHTML = `
+            <div id="score-display">SCORE: 0</div>
+            <div id="lives-display">LIVES: 💚💚💚</div>
+        `;
+        container.appendChild(uiOverlay);
+        
+        const powerupOverlay = document.createElement('div');
+        powerupOverlay.className = 'absolute bottom-0 left-0 p-6 text-white font-mono text-sm pointer-events-none';
+        powerupOverlay.id = 'powerup-display';
+        container.appendChild(powerupOverlay);
+
+        const gameOverScreen = document.createElement('div');
+        gameOverScreen.id = 'game-over-screen';
+        gameOverScreen.className = 'absolute inset-0 bg-black bg-opacity-70 flex-col items-center justify-center text-white font-mono hidden';
+        gameOverScreen.innerHTML = `
+            <h2 class="text-6xl mb-4">GAME OVER</h2>
+            <p id="final-score" class="text-3xl mb-8"></p>
+            <button id="restart-button" class="px-6 py-3 bg-indigo-600 rounded-lg text-xl hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400">RESTART</button>
+        `;
+        container.appendChild(gameOverScreen);
+
+        litechat.target.appendChild(container);
+
+        // --- 3. Game Constants & State ---
+        const gameBounds = { x: 22, z: 30 };
+        const clock = new THREE.Clock();
+        
+        let gameState;
+
+        function initializeGameState() {
+            gameState = {
+                score: 0,
+                lives: 3,
+                gameOver: false,
+                player: null,
+                bullets: [],
+                enemies: [],
+                bonuses: [],
+                particles: [],
+                fireCooldown: 0,
+                enemySpawnTimer: 2, // Start spawning after 2 seconds
+                powerups: {
+                    fireRate: 0, // times collected
+                    gunLevel: 1, // 1, 2, or 3
+                    bounce: 0, // times collected
+                }
+            };
+        }
+
+        const BONUS_TYPES = {
+            RAPID_FIRE: { color: 0x00ffff, name: 'Rapid Fire' },
+            MULTI_GUN: { color: 0xff00ff, name: 'Multi-Gun' },
+            BOUNCE: { color: 0xffff00, name: 'Bouncy Shot' },
+            EXTRA_LIFE: { color: 0x00ff00, name: 'Extra Life' },
+        };
+
+        // --- 4. Three.js Scene Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+        camera.position.set(0, 35, 10); // Angled top-down view
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(736, 586);
+        renderer.setClearColor(0x111827); // Match bg-slate-900
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x606080, 1.5);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+        directionalLight.position.set(5, 10, 7);
+        scene.add(directionalLight);
+
+        // Game Floor
+        const floorGeo = new THREE.PlaneGeometry(gameBounds.x * 1.5, gameBounds.z * 1.5);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b }); // slate-800
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+
+        // --- 5. Game Object Creation ---
+        function createPlayer() {
+            const geo = new THREE.ConeGeometry(0.8, 2, 8);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x4f46e5, emissive: 0x3b82f6, metalness: 0.3, roughness: 0.5 });
+            const player = new THREE.Mesh(geo, mat);
+            player.rotation.x = Math.PI / 2;
+            player.position.set(0, 0, gameBounds.z / 2 - 5);
+            scene.add(player);
+            gameState.player = player;
+        }
+
+        function createBullet(pos, vel, bounceCount) {
+            const geo = new THREE.SphereGeometry(0.3, 8, 8);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xfb923c, emissive: 0xf97316 });
+            const bullet = new THREE.Mesh(geo, mat);
+            bullet.position.copy(pos);
+            bullet.velocity = vel;
+            bullet.bounceCount = bounceCount;
+            scene.add(bullet);
+            gameState.bullets.push(bullet);
+        }
+
+        function createEnemy() {
+            const geo = new THREE.IcosahedronGeometry(1, 0);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xdc2626, metalness: 0.2, roughness: 0.6});
+            const enemy = new THREE.Mesh(geo, mat);
+            enemy.position.set(
+                (Math.random() - 0.5) * gameBounds.x,
+                0,
+                -gameBounds.z / 2 - 5
+            );
+            enemy.velocity = new THREE.Vector3(0, 0, 2 + gameState.score / 200); // Speed increases with score
+            scene.add(enemy);
+            gameState.enemies.push(enemy);
+        }
+
+        function createBonus(pos, type) {
+            const geo = new THREE.TetrahedronGeometry(0.7, 0);
+            const mat = new THREE.MeshStandardMaterial({ color: type.color, emissive: type.color, emissiveIntensity: 0.5 });
+            const bonus = new THREE.Mesh(geo, mat);
+            bonus.position.copy(pos);
+            bonus.velocity = new THREE.Vector3(0, 0, 3);
+            bonus.type = type;
+            bonus.rotationSpeed = new THREE.Vector3(Math.random(), Math.random(), Math.random());
+            scene.add(bonus);
+            gameState.bonuses.push(bonus);
+        }
+        
+        function createExplosion(pos, color) {
+            for (let i = 0; i < 20; i++) {
+                const geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+                const mat = new THREE.MeshBasicMaterial({ color });
+                const particle = new THREE.Mesh(geo, mat);
+                particle.position.copy(pos);
+                particle.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 15,
+                    (Math.random() - 0.5) * 15,
+                    (Math.random() - 0.5) * 15
+                );
+                particle.lifespan = 0.5;
+                scene.add(particle);
+                gameState.particles.push(particle);
+            }
+        }
+
+        // --- 6. Input Handling ---
+        const keys = {};
+        document.addEventListener('keydown', (e) => keys[e.code] = true);
+        document.addEventListener('keyup', (e) => keys[e.code] = false);
+
+        // --- 7. Game Logic ---
+        function updatePlayer(delta) {
+            if (!gameState.player) return;
+            const speed = 15;
+            if (keys['KeyW'] || keys['ArrowUp']) gameState.player.position.z -= speed * delta;
+            if (keys['KeyS'] || keys['ArrowDown']) gameState.player.position.z += speed * delta;
+            if (keys['KeyA'] || keys['ArrowLeft']) gameState.player.position.x -= speed * delta;
+            if (keys['KeyD'] || keys['ArrowRight']) gameState.player.position.x += speed * delta;
+
+            // Clamp position
+            gameState.player.position.x = Math.max(-gameBounds.x / 2, Math.min(gameBounds.x / 2, gameState.player.position.x));
+            gameState.player.position.z = Math.max(-gameBounds.z / 2, Math.min(gameBounds.z / 2, gameState.player.position.z));
+            
+            // Firing
+            gameState.fireCooldown -= delta;
+            if (keys['Space'] && gameState.fireCooldown <= 0) {
+                const fireRate = 0.3 / (1 + gameState.powerups.fireRate * 0.1);
+                gameState.fireCooldown = fireRate;
+                const bulletSpeed = 40;
+                const bounceCount = gameState.powerups.bounce;
+                const p_pos = gameState.player.position;
+
+                // Level 1: Single gun
+                if (gameState.powerups.gunLevel === 1) {
+                    createBullet(p_pos.clone(), new THREE.Vector3(0, 0, -bulletSpeed), bounceCount);
+                }
+                // Level 2: Dual guns
+                else if (gameState.powerups.gunLevel === 2) {
+                    createBullet(p_pos.clone().add(new THREE.Vector3(-0.5, 0, 0)), new THREE.Vector3(0, 0, -bulletSpeed), bounceCount);
+                    createBullet(p_pos.clone().add(new THREE.Vector3(0.5, 0, 0)), new THREE.Vector3(0, 0, -bulletSpeed), bounceCount);
+                }
+                // Level 3: Spread shot
+                else {
+                    const angle = Math.PI / 9; // 20 degrees
+                    createBullet(p_pos.clone(), new THREE.Vector3(0, 0, -bulletSpeed), bounceCount);
+                    createBullet(p_pos.clone(), new THREE.Vector3(-Math.sin(angle) * bulletSpeed, 0, -Math.cos(angle) * bulletSpeed), bounceCount);
+                    createBullet(p_pos.clone(), new THREE.Vector3(Math.sin(angle) * bulletSpeed, 0, -Math.cos(angle) * bulletSpeed), bounceCount);
+                }
+            }
+        }
+
+        function updateObjects(delta) {
+            // Update bullets
+            for (let i = gameState.bullets.length - 1; i >= 0; i--) {
+                const b = gameState.bullets[i];
+                b.position.add(b.velocity.clone().multiplyScalar(delta));
+                if (b.position.z < -gameBounds.z / 2 - 10) {
+                    scene.remove(b);
+                    gameState.bullets.splice(i, 1);
+                }
+            }
+            // Update enemies
+            for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                const e = gameState.enemies[i];
+                e.position.add(e.velocity.clone().multiplyScalar(delta));
+                e.rotation.x += 0.5 * delta;
+                e.rotation.y += 0.5 * delta;
+                if (e.position.z > gameBounds.z / 2 + 5) {
+                    scene.remove(e);
+                    gameState.enemies.splice(i, 1);
+                }
+            }
+            // Update bonuses
+            for (let i = gameState.bonuses.length - 1; i >= 0; i--) {
+                const b = gameState.bonuses[i];
+                b.position.add(b.velocity.clone().multiplyScalar(delta));
+                b.rotation.x += b.rotationSpeed.x * delta;
+                b.rotation.y += b.rotationSpeed.y * delta;
+                if (b.position.z > gameBounds.z / 2 + 5) {
+                    scene.remove(b);
+                    gameState.bonuses.splice(i, 1);
+                }
+            }
+            // Update particles
+            for (let i = gameState.particles.length - 1; i >= 0; i--) {
+                const p = gameState.particles[i];
+                p.position.add(p.velocity.clone().multiplyScalar(delta));
+                p.lifespan -= delta;
+                if (p.lifespan <= 0) {
+                    scene.remove(p);
+                    gameState.particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function handleCollisions() {
+            // Bullet -> Enemy
+            for (let i = gameState.bullets.length - 1; i >= 0; i--) {
+                const bullet = gameState.bullets[i];
+                for (let j = gameState.enemies.length - 1; j >= 0; j--) {
+                    const enemy = gameState.enemies[j];
+                    if (bullet.position.distanceTo(enemy.position) < 1.5) {
+                        createExplosion(enemy.position, enemy.material.color);
+                        
+                        // Bounce logic
+                        if (bullet.bounceCount > 0) {
+                            let closestEnemy = null;
+                            let minDistance = Infinity;
+                            gameState.enemies.forEach((otherEnemy, index) => {
+                                if (j !== index) {
+                                    const dist = enemy.position.distanceTo(otherEnemy.position);
+                                    if (dist < minDistance) {
+                                        minDistance = dist;
+                                        closestEnemy = otherEnemy;
+                                    }
+                                }
+                            });
+                            if (closestEnemy) {
+                                const direction = new THREE.Vector3().subVectors(closestEnemy.position, enemy.position).normalize();
+                                createBullet(enemy.position, direction.multiplyScalar(40), bullet.bounceCount - 1);
+                            }
+                        }
+
+                        // Remove collided objects
+                        scene.remove(enemy);
+                        gameState.enemies.splice(j, 1);
+                        scene.remove(bullet);
+                        gameState.bullets.splice(i, 1);
+                        
+                        // Update score & drop bonus
+                        gameState.score += 100;
+                        if (Math.random() < 0.25) { // 25% chance to drop bonus
+                            const bonusTypes = Object.values(BONUS_TYPES);
+                            const randomType = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
+                            createBonus(enemy.position, randomType);
+                        }
+                        break; // Bullet can only hit one enemy
+                    }
+                }
+            }
+            
+            if (!gameState.player) return;
+
+            // Player -> Enemy
+            for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                const enemy = gameState.enemies[i];
+                if (gameState.player.position.distanceTo(enemy.position) < 1.8) {
+                    scene.remove(enemy);
+                    gameState.enemies.splice(i, 1);
+                    playerHit();
+                }
+            }
+            
+            // Player -> Bonus
+            for (let i = gameState.bonuses.length - 1; i >= 0; i--) {
+                const bonus = gameState.bonuses[i];
+                if (gameState.player.position.distanceTo(bonus.position) < 1.8) {
+                    applyBonus(bonus.type);
+                    scene.remove(bonus);
+                    gameState.bonuses.splice(i, 1);
+                }
+            }
+        }
+
+        function playerHit() {
+            gameState.lives--;
+            createExplosion(gameState.player.position, gameState.player.material.color);
+            if (gameState.lives <= 0) {
+                endGame();
+            } else {
+                // Reset player position and powerups
+                gameState.player.position.set(0, 0, gameBounds.z / 2 - 5);
+                gameState.powerups = { fireRate: 0, gunLevel: 1, bounce: 0 };
+            }
+        }
+        
+        function applyBonus(type) {
+            switch(type) {
+                case BONUS_TYPES.RAPID_FIRE:
+                    gameState.powerups.fireRate++;
+                    break;
+                case BONUS_TYPES.MULTI_GUN:
+                    if (gameState.powerups.gunLevel < 3) gameState.powerups.gunLevel++;
+                    break;
+                case BONUS_TYPES.BOUNCE:
+                    gameState.powerups.bounce++;
+                    break;
+                case BONUS_TYPES.EXTRA_LIFE:
+                    gameState.lives++;
+                    break;
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score-display').textContent = `SCORE: ${gameState.score}`;
+            document.getElementById('lives-display').innerHTML = `LIVES: ${'💚'.repeat(gameState.lives)}`;
+
+            const pu = gameState.powerups;
+            let powerupText = [];
+            if (pu.fireRate > 0) powerupText.push(`Rapid Fire x${pu.fireRate} <span style="color:${BONUS_TYPES.RAPID_FIRE.color.toString(16)}">■</span>`);
+            if (pu.gunLevel > 1) powerupText.push(`Multi-Gun Lvl ${pu.gunLevel} <span style="color:${BONUS_TYPES.MULTI_GUN.color.toString(16)}">■</span>`);
+            if (pu.bounce > 0) powerupText.push(`Bouncy x${pu.bounce} <span style="color:${BONUS_TYPES.BOUNCE.color.toString(16)}">■</span>`);
+            document.getElementById('powerup-display').innerHTML = powerupText.join(' | ');
+        }
+
+        function spawnEnemies(delta) {
+            gameState.enemySpawnTimer -= delta;
+            if (gameState.enemySpawnTimer <= 0) {
+                createEnemy();
+                // Spawn faster over time, but with a minimum spawn time
+                gameState.enemySpawnTimer = Math.max(0.3, 2 - gameState.score / 1000);
+            }
+        }
+
+        function endGame() {
+            gameState.gameOver = true;
+            if(gameState.player) scene.remove(gameState.player);
+            gameState.player = null;
+            document.getElementById('final-score').textContent = `FINAL SCORE: ${gameState.score}`;
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            document.getElementById('game-over-screen').classList.add('flex');
+        }
+
+        function cleanupScene() {
+            [...gameState.bullets, ...gameState.enemies, ...gameState.bonuses, ...gameState.particles].forEach(obj => scene.remove(obj));
+            if(gameState.player) scene.remove(gameState.player);
+        }
+
+        function startGame() {
+            cleanupScene();
+            initializeGameState();
+            createPlayer();
+            document.getElementById('game-over-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.remove('flex');
+            animate();
+        }
+        
+        document.getElementById('restart-button').onclick = startGame;
+
+        // --- 8. Animation Loop ---
+        function animate() {
+            if (gameState.gameOver) return;
+
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            updatePlayer(delta);
+            updateObjects(delta);
+            handleCollisions();
+            spawnEnemies(delta);
+            updateUI();
+            
+            renderer.render(scene, camera);
+        }
+        
+        // --- Initial Start ---
+        startGame();
+
+    } catch (error) {
+        litechat.utils.log('error', 'Failed to create game:', error);
+        litechat.target.innerHTML = `<div class="p-4 text-red-500">Error loading game assets. Please check the console.</div>`;
+    }
+}
+
+createShooterGame();
+        } catch (error) {
+            console.error('Execution error:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+            errorDiv.textContent = 'Execution Error: ' + error.message;
+            document.getElementById('litechat-target').appendChild(errorDiv);
+        }
+        
+    </script>
+</body>
+</html>

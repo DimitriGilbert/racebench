@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>qwen3-coder - LiteChat Race Result</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button { 
+            transition: all 0.2s ease-in-out; 
+            border-bottom: 2px solid transparent; 
+        }
+        .tab-button.active { 
+            border-bottom-color: hsl(var(--primary)); 
+            color: hsl(var(--primary)); 
+            background-color: hsl(var(--muted)); 
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-8">
+    <div class="max-w-7xl mx-auto container bg-card rounded-2xl shadow-lg overflow-hidden border border-border">
+        <div class="header bg-card border-b border-border p-6 sm:p-8 text-center">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-3xl sm:text-4xl font-bold text-card-foreground">🚀 qwen3-coder</h1>
+                <button id="theme-toggle" class="p-2 rounded-md border border-border bg-muted hover:bg-muted/80">
+                    <span class="dark:hidden">🌙</span>
+                    <span class="hidden dark:inline">☀️</span>
+                </button>
+            </div>
+            <p class="text-muted-foreground">LiteChat Model Race Result (RUNJS)</p>
+        </div>
+        
+        
+        
+        <div class="p-4 sm:p-6">
+            <div class="border-b border-border mb-4">
+                <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                    
+                        <button class="tab-button active hover:text-primary/80 whitespace-nowrap py-3 px-4 font-medium text-sm rounded-t-md" data-tab="preview">Live Preview</button>
+                        <button class="tab-button hover:text-primary/80 whitespace-nowrap py-3 px-4 font-medium text-sm rounded-t-md" data-tab="raw">Raw Response</button>
+                    
+                </nav>
+            </div>
+
+            
+                <div id="preview" class="tab-content active">
+                    <div id="litechat-target" class="w-full min-h-[600px] bg-muted/50 rounded-lg p-4 border border-border"></div>
+                </div>
+            
+
+            <div id="raw" class="tab-content">
+                <div class="w-full min-h-[600px] bg-gray-900 text-white rounded-lg p-4 overflow-x-auto font-mono">
+                    <pre class="whitespace-pre-wrap text-sm"><code>```runjs
+// Clear any previous content
+litechat.target.replaceChildren();
+
+async function createScrollShooter() {
+    try {
+        litechat.utils.log('info', '🚀 Starting Scroll Shooter creation...');
+        
+        // Load Three.js and required modules
+        const modules = await litechat.utils.loadModules([
+            {
+                url: 'https://unpkg.com/three@0.170.0/build/three.module.js',
+                name: 'THREE',
+                globalKey: 'THREE',
+                importMap: {
+                    "three": "https://unpkg.com/three@0.170.0/build/three.module.js"
+                }
+            }
+        ]);
+
+        const { THREE } = modules;
+        
+        // Game state
+        const gameState = {
+            score: 0,
+            lives: 3,
+            fireRate: 1,
+            bouncyShots: 0,
+            gunMode: 1, // 1: single, 2: double, 3: triple
+            enemySpeedMultiplier: 1,
+            enemiesKilled: 0,
+            powerups: {
+                fireRate: 0,
+                bouncy: 0,
+                guns: 0,
+                lives: 0
+            }
+        };
+
+        // Create container
+        const container = document.createElement('div');
+        container.className = 'relative w-full h-[600px] bg-gradient-to-b from-purple-900 to-indigo-800 rounded-lg overflow-hidden';
+        
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 600;
+        canvas.className = 'absolute inset-0';
+        container.appendChild(canvas);
+        
+        // UI Overlay
+        const uiOverlay = document.createElement('div');
+        uiOverlay.className = 'absolute inset-0 pointer-events-none';
+        container.appendChild(uiOverlay);
+        
+        // Score display
+        const scoreDisplay = document.createElement('div');
+        scoreDisplay.className = 'absolute top-4 left-4 text-yellow-300 font-bold text-xl';
+        scoreDisplay.textContent = `Score: ${gameState.score}`;
+        uiOverlay.appendChild(scoreDisplay);
+        
+        // Lives display
+        const livesDisplay = document.createElement('div');
+        livesDisplay.className = 'absolute top-4 right-4 text-red-400 font-bold text-xl';
+        livesDisplay.textContent = `Lives: ${gameState.lives}`;
+        uiOverlay.appendChild(livesDisplay);
+        
+        // Powerup display
+        const powerupDisplay = document.createElement('div');
+        powerupDisplay.className = 'absolute bottom-4 left-4 text-white text-sm';
+        powerupDisplay.innerHTML = `
+            &lt;div&gt;Fire Rate: ${(gameState.fireRate).toFixed(1)}x&lt;/div&gt;
+            &lt;div&gt;Bouncy Shots: ${gameState.bouncyShots}&lt;/div&gt;
+            &lt;div&gt;Guns: ${gameState.gunMode}&lt;/div&gt;
+        `;
+        uiOverlay.appendChild(powerupDisplay);
+        
+        // Instructions
+        const instructions = document.createElement('div');
+        instructions.className = 'absolute bottom-4 right-4 text-white text-sm text-right';
+        instructions.innerHTML = `
+            &lt;div&gt;← → : Move&lt;/div&gt;
+            &lt;div&gt;SPACE : Shoot&lt;/div&gt;
+            &lt;div&gt;Catch powerups!&lt;/div&gt;
+        `;
+        uiOverlay.appendChild(instructions);
+        
+        litechat.target.appendChild(container);
+
+        // Three.js scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a0033); // Deep purple
+        
+        const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+        camera.position.set(0, 0, 10);
+        
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(canvas.width, canvas.height);
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 5, 5);
+        scene.add(directionalLight);
+        
+        // Player ship
+        const playerGeometry = new THREE.ConeGeometry(0.5, 1.5, 4);
+        playerGeometry.rotateX(Math.PI / 2);
+        const playerMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x00ffff,
+            emissive: 0x004444,
+            shininess: 100
+        });
+        const player = new THREE.Mesh(playerGeometry, playerMaterial);
+        player.position.z = -5;
+        scene.add(player);
+        
+        // Game objects
+        const bullets = [];
+        const enemies = [];
+        const powerups = [];
+        const particles = [];
+        
+        // Create starfield background
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 1000;
+        const starPositions = new Float32Array(starCount * 3);
+        
+        for (let i = 0; i &lt; starCount * 3; i += 3) {
+            starPositions[i] = (Math.random() - 0.5) * 100;
+            starPositions[i + 1] = (Math.random() - 0.5) * 100;
+            starPositions[i + 2] = (Math.random() - 0.5) * 100 - 10;
+        }
+        
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.1,
+            transparent: true,
+            opacity: 0.8
+        });
+        const starField = new THREE.Points(starGeometry, starMaterial);
+        scene.add(starField);
+        
+        // Input handling
+        const keys = {};
+        window.addEventListener('keydown', (e) =&gt; {
+            keys[e.key] = true;
+            
+            // Prevent spacebar from scrolling page
+            if (e.key === ' ') {
+                e.preventDefault();
+            }
+        });
+        window.addEventListener('keyup', (e) =&gt; {
+            keys[e.key] = false;
+        });
+        
+        // Touch handling for mobile
+        let touchStartX = 0;
+        canvas.addEventListener('touchstart', (e) =&gt; {
+            touchStartX = e.touches[0].clientX;
+            e.preventDefault();
+        });
+        
+        canvas.addEventListener('touchmove', (e) =&gt; {
+            const touchX = e.touches[0].clientX;
+            const diff = touchX - touchStartX;
+            
+            // Move player based on touch movement
+            player.position.x += diff * 0.01;
+            player.position.x = Math.max(-8, Math.min(8, player.position.x));
+            
+            touchStartX = touchX;
+            e.preventDefault();
+        });
+        
+        // Shooting
+        let lastShot = 0;
+        const shoot = () =&gt; {
+            const now = Date.now();
+            if (now - lastShot &gt; 200 / gameState.fireRate) {
+                lastShot = now;
+                
+                const createBullet = (xOffset = 0, yOffset = 0, zOffset = 0) =&gt; {
+                    const bulletGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+                    const bulletMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0xff00ff,
+                        emissive: 0x440044
+                    });
+                    const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+                    bullet.position.set(
+                        player.position.x + xOffset,
+                        player.position.y + yOffset,
+                        player.position.z + zOffset
+                    );
+                    bullet.userData = { 
+                        bounces: gameState.bouncyShots,
+                        isBullet: true 
+                    };
+                    scene.add(bullet);
+                    bullets.push(bullet);
+                };
+                
+                // Different gun modes
+                switch (gameState.gunMode) {
+                    case 1: // Single shot
+                        createBullet();
+                        break;
+                    case 2: // Double shot
+                        createBullet(-0.3, 0, 0);
+                        createBullet(0.3, 0, 0);
+                        break;
+                    case 3: // Triple shot
+                        createBullet(-0.4, 0, 0);
+                        createBullet(0, 0, 0.2);
+                        createBullet(0.4, 0, 0);
+                        break;
+                }
+            }
+        };
+        
+        // Create enemy
+        const createEnemy = () =&gt; {
+            const enemyGeometry = new THREE.OctahedronGeometry(0.5);
+            const enemyMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xff5500,
+                emissive: 0x442200
+            });
+            const enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+            
+            // Random position at top of screen
+            enemy.position.set(
+                (Math.random() - 0.5) * 16,
+                10,
+                player.position.z - 5
+            );
+            
+            enemy.userData = { 
+                speed: 0.05 * gameState.enemySpeedMultiplier,
+                health: 1 + Math.floor(gameState.enemiesKilled / 20),
+                isEnemy: true 
+            };
+            
+            scene.add(enemy);
+            enemies.push(enemy);
+        };
+        
+        // Create powerup
+        const createPowerup = () =&gt; {
+            const types = ['fireRate', 'bouncy', 'guns', 'lives'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            let color, emissive;
+            switch (type) {
+                case 'fireRate': color = 0xffff00; emissive = 0x444400; break; // Yellow
+                case 'bouncy': color = 0x00ff00; emissive = 0x004400; break;   // Green
+                case 'guns': color = 0xff00ff; emissive = 0x440044; break;     // Magenta
+                case 'lives': color = 0xff0000; emissive = 0x440000; break;    // Red
+            }
+            
+            const powerupGeometry = new THREE.IcosahedronGeometry(0.3);
+            const powerupMaterial = new THREE.MeshPhongMaterial({ 
+                color, 
+                emissive,
+                shininess: 100
+            });
+            const powerup = new THREE.Mesh(powerupGeometry, powerupMaterial);
+            
+            powerup.position.set(
+                (Math.random() - 0.5) * 16,
+                10,
+                player.position.z - 5
+            );
+            
+            powerup.userData = { 
+                type,
+                isPowerup: true 
+            };
+            
+            scene.add(powerup);
+            powerups.push(powerup);
+        };
+        
+        // Create explosion particles
+        const createExplosion = (position) =&gt; {
+            for (let i = 0; i &lt; 10; i++) {
+                const particleGeometry = new THREE.SphereGeometry(0.1, 4, 4);
+                const particleMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xff5500,
+                    emissive: 0x442200
+                });
+                const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+                
+                particle.position.copy(position);
+                particle.userData = {
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.2,
+                        (Math.random() - 0.5) * 0.2,
+                        (Math.random() - 0.5) * 0.2
+                    ),
+                    life: 30
+                };
+                
+                scene.add(particle);
+                particles.push(particle);
+            }
+        };
+        
+        // Game loop
+        let lastEnemySpawn = 0;
+        let lastPowerupSpawn = 0;
+        
+        const animate = () =&gt; {
+            requestAnimationFrame(animate);
+            
+            // Player movement
+            if (keys['ArrowLeft'] || keys['a']) {
+                player.position.x -= 0.2;
+            }
+            if (keys['ArrowRight'] || keys['d']) {
+                player.position.x += 0.2;
+            }
+            
+            // Keep player in bounds
+            player.position.x = Math.max(-8, Math.min(8, player.position.x));
+            
+            // Shooting
+            if (keys[' '] || keys['w'] || keys['ArrowUp']) {
+                shoot();
+            }
+            
+            // Spawn enemies
+            const now = Date.now();
+            if (now - lastEnemySpawn &gt; 1000) {
+                lastEnemySpawn = now;
+                createEnemy();
+            }
+            
+            // Spawn powerups (less frequently)
+            if (now - lastPowerupSpawn &gt; 5000) {
+                lastPowerupSpawn = now;
+                if (Math.random() &gt; 0.7) { // 30% chance
+                    createPowerup();
+                }
+            }
+            
+            // Update bullets
+            for (let i = bullets.length - 1; i &gt;= 0; i--) {
+                const bullet = bullets[i];
+                bullet.position.y += 0.5;
+                
+                // Remove bullets that go off screen
+                if (bullet.position.y &gt; 15) {
+                    scene.remove(bullet);
+                    bullets.splice(i, 1);
+                }
+            }
+            
+            // Update enemies
+            for (let i = enemies.length - 1; i &gt;= 0; i--) {
+                const enemy = enemies[i];
+                enemy.position.y -= enemy.userData.speed;
+                enemy.rotation.x += 0.05;
+                enemy.rotation.y += 0.03;
+                
+                // Remove enemies that go off screen
+                if (enemy.position.y &lt; -10) {
+                    scene.remove(enemy);
+                    enemies.splice(i, 1);
+                    // Lose a life when enemy escapes
+                    gameState.lives--;
+                    livesDisplay.textContent = `Lives: ${gameState.lives}`;
+                    
+                    if (gameState.lives &lt;= 0) {
+                        // Game over
+                        const gameOver = document.createElement('div');
+                        gameOver.className = 'absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 text-white text-4xl font-bold';
+                        gameOver.textContent = 'GAME OVER';
+                        uiOverlay.appendChild(gameOver);
+                        return;
+                    }
+                }
+            }
+            
+            // Update powerups
+            for (let i = powerups.length - 1; i &gt;= 0; i--) {
+                const powerup = powerups[i];
+                powerup.position.y -= 0.05;
+                powerup.rotation.x += 0.03;
+                powerup.rotation.y += 0.05;
+                
+                // Remove powerups that go off screen
+                if (powerup.position.y &lt; -10) {
+                    scene.remove(powerup);
+                    powerups.splice(i, 1);
+                }
+            }
+            
+            // Update particles
+            for (let i = particles.length - 1; i &gt;= 0; i--) {
+                const particle = particles[i];
+                particle.position.add(particle.userData.velocity);
+                particle.userData.life--;
+                
+                if (particle.userData.life &lt;= 0) {
+                    scene.remove(particle);
+                    particles.splice(i, 1);
+                }
+            }
+            
+            // Collision detection - bullets vs enemies
+            for (let i = bullets.length - 1; i &gt;= 0; i--) {
+                const bullet = bullets[i];
+                
+                for (let j = enemies.length - 1; j &gt;= 0; j--) {
+                    const enemy = enemies[j];
+                    
+                    const distance = bullet.position.distanceTo(enemy.position);
+                    if (distance &lt; 0.8) {
+                        // Hit!
+                        createExplosion(enemy.position);
+                        
+                        // Remove enemy
+                        scene.remove(enemy);
+                        enemies.splice(j, 1);
+                        
+                        // Handle bouncy shots
+                        if (bullet.userData.bounces &gt; 0) {
+                            bullet.userData.bounces--;
+                            // Keep bullet, change direction randomly
+                            bullet.position.y -= 1; // Move down a bit
+                        } else {
+                            // Remove bullet
+                            scene.remove(bullet);
+                            bullets.splice(i, 1);
+                        }
+                        
+                        // Update score
+                        gameState.score += 10;
+                        scoreDisplay.textContent = `Score: ${gameState.score}`;
+                        
+                        gameState.enemiesKilled++;
+                        
+                        // Increase difficulty every 10 kills
+                        if (gameState.enemiesKilled % 10 === 0) {
+                            gameState.enemySpeedMultiplier += 0.1;
+                        }
+                        
+                        break;
+                    }
+                }
+            }
+            
+            // Collision detection - player vs enemies
+            for (let i = enemies.length - 1; i &gt;= 0; i--) {
+                const enemy = enemies[i];
+                const distance = player.position.distanceTo(enemy.position);
+                
+                if (distance &lt; 1) {
+                    // Collision!
+                    createExplosion(enemy.position);
+                    scene.remove(enemy);
+                    enemies.splice(i, 1);
+                    
+                    gameState.lives--;
+                    livesDisplay.textContent = `Lives: ${gameState.lives}`;
+                    
+                    if (gameState.lives &lt;= 0) {
+                        // Game over
+                        const gameOver = document.createElement('div');
+                        gameOver.className = 'absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 text-white text-4xl font-bold';
+                        gameOver.textContent = 'GAME OVER';
+                        uiOverlay.appendChild(gameOver);
+                        return;
+                    }
+                }
+            }
+            
+            // Collision detection - player vs powerups
+            for (let i = powerups.length - 1; i &gt;= 0; i--) {
+                const powerup = powerups[i];
+                const distance = player.position.distanceTo(powerup.position);
+                
+                if (distance &lt; 1) {
+                    // Collect powerup
+                    switch (powerup.userData.type) {
+                        case 'fireRate':
+                            gameState.fireRate += 0.1;
+                            gameState.powerups.fireRate++;
+                            break;
+                        case 'bouncy':
+                            gameState.bouncyShots++;
+                            gameState.powerups.bouncy++;
+                            break;
+                        case 'guns':
+                            gameState.gunMode = Math.min(3, gameState.gunMode + 1);
+                            gameState.powerups.guns++;
+                            break;
+                        case 'lives':
+                            gameState.lives++;
+                            gameState.powerups.lives++;
+                            livesDisplay.textContent = `Lives: ${gameState.lives}`;
+                            break;
+                    }
+                    
+                    // Update powerup display
+                    powerupDisplay.innerHTML = `
+                        &lt;div&gt;Fire Rate: ${(gameState.fireRate).toFixed(1)}x&lt;/div&gt;
+                        &lt;div&gt;Bouncy Shots: ${gameState.bouncyShots}&lt;/div&gt;
+                        &lt;div&gt;Guns: ${gameState.gunMode}&lt;/div&gt;
+                    `;
+                    
+                    scene.remove(powerup);
+                    powerups.splice(i, 1);
+                }
+            }
+            
+            // Rotate player slightly for visual effect
+            player.rotation.z = Math.sin(Date.now() * 0.005) * 0.1;
+            
+            // Move starfield for parallax effect
+            starField.position.y -= 0.01;
+            if (starField.position.y &lt; -50) {
+                starField.position.y = 50;
+            }
+            
+            renderer.render(scene, camera);
+        };
+
+        animate();
+        litechat.utils.log('info', '🎉 SUCCESS! Scroll Shooter is ready!');
+        
+    } catch (error) {
+        litechat.utils.log('error', '❌ FAILED to create game:', error.message);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+        errorDiv.textContent = `Error: ${error.message}`;
+        litechat.target.appendChild(errorDiv);
+    }
+}
+
+createScrollShooter();
+```</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer bg-muted/50 p-4 border-t border-border text-center text-sm text-muted-foreground">
+            Generated by <strong>LiteChat</strong> • <a href="./index.html" class="text-primary hover:underline">Back to Main Page</a>
+        </div>
+    </div>
+
+    <script type="module">
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        themeToggle?.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        });
+        
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        }
+
+        // Tab switching logic
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const tabId = button.dataset.tab;
+                tabContents.forEach(content => content.id === tabId ? content.classList.add('active') : content.classList.remove('active'));
+            });
+        });
+        
+        
+        // --- LITECHAT MOCK API ---
+        
+        const litechatTarget = document.getElementById('litechat-target');
+        async function loadModules(moduleConfigs) {
+            const loadedModules = {};
+            const loadPromises = {};
+            const globalImportMap = {};
+            moduleConfigs.forEach(config => {
+                if (config.importMap) Object.assign(globalImportMap, config.importMap);
+            });
+            const existingMap = document.querySelector('script[type="importmap"]');
+            if (existingMap) existingMap.remove();
+            if (Object.keys(globalImportMap).length > 0) {
+                const mapScript = document.createElement('script');
+                mapScript.type = 'importmap';
+                mapScript.textContent = JSON.stringify({ imports: globalImportMap });
+                document.head.appendChild(mapScript);
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            const loadSingleModule = async (config) => {
+                const key = config.globalKey || config.name;
+                if (window[key]) return window[key];
+                if (key in loadPromises) return loadPromises[key];
+                if (config.dependencies) {
+                    await Promise.all(config.dependencies.map(depKey => {
+                        const depModule = moduleConfigs.find(m => (m.globalKey || m.name) === depKey);
+                        if (depModule) return loadSingleModule(depModule);
+                        return Promise.resolve();
+                    }));
+                }
+                loadPromises[key] = (async () => {
+                    try {
+                        const module = await import(config.url);
+                        window[key] = module;
+                        loadedModules[key] = module;
+                        return module;
+                    } catch (error) {
+                        console.error(`Error loading module ${config.name}:`, error);
+                        throw error;
+                    }
+                })();
+                return loadPromises[key];
+            };
+            await Promise.all(moduleConfigs.map(config => loadSingleModule(config)));
+            return loadedModules;
+        }
+        window.litechat = {
+            utils: {
+                log: (...args) => console.log(...args),
+                toast: (message) => alert(message),
+                error: (...args) => console.error(...args),
+                warn: (...args) => console.warn(...args),
+                loadModules,
+                loadModule: async (url, name, key, importMap) => (await loadModules([{url, name, globalKey: key, importMap}]))[key || name],
+            },
+            target: litechatTarget,
+            emit: (eventName, payload) => window.dispatchEvent(new CustomEvent(eventName, { detail: payload })),
+        };
+    
+
+        // --- EXECUTE CODE ---
+        try {
+            // Clear any previous content
+litechat.target.replaceChildren();
+
+async function createScrollShooter() {
+    try {
+        litechat.utils.log('info', '🚀 Starting Scroll Shooter creation...');
+        
+        // Load Three.js and required modules
+        const modules = await litechat.utils.loadModules([
+            {
+                url: 'https://unpkg.com/three@0.170.0/build/three.module.js',
+                name: 'THREE',
+                globalKey: 'THREE',
+                importMap: {
+                    "three": "https://unpkg.com/three@0.170.0/build/three.module.js"
+                }
+            }
+        ]);
+
+        const { THREE } = modules;
+        
+        // Game state
+        const gameState = {
+            score: 0,
+            lives: 3,
+            fireRate: 1,
+            bouncyShots: 0,
+            gunMode: 1, // 1: single, 2: double, 3: triple
+            enemySpeedMultiplier: 1,
+            enemiesKilled: 0,
+            powerups: {
+                fireRate: 0,
+                bouncy: 0,
+                guns: 0,
+                lives: 0
+            }
+        };
+
+        // Create container
+        const container = document.createElement('div');
+        container.className = 'relative w-full h-[600px] bg-gradient-to-b from-purple-900 to-indigo-800 rounded-lg overflow-hidden';
+        
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 600;
+        canvas.className = 'absolute inset-0';
+        container.appendChild(canvas);
+        
+        // UI Overlay
+        const uiOverlay = document.createElement('div');
+        uiOverlay.className = 'absolute inset-0 pointer-events-none';
+        container.appendChild(uiOverlay);
+        
+        // Score display
+        const scoreDisplay = document.createElement('div');
+        scoreDisplay.className = 'absolute top-4 left-4 text-yellow-300 font-bold text-xl';
+        scoreDisplay.textContent = `Score: ${gameState.score}`;
+        uiOverlay.appendChild(scoreDisplay);
+        
+        // Lives display
+        const livesDisplay = document.createElement('div');
+        livesDisplay.className = 'absolute top-4 right-4 text-red-400 font-bold text-xl';
+        livesDisplay.textContent = `Lives: ${gameState.lives}`;
+        uiOverlay.appendChild(livesDisplay);
+        
+        // Powerup display
+        const powerupDisplay = document.createElement('div');
+        powerupDisplay.className = 'absolute bottom-4 left-4 text-white text-sm';
+        powerupDisplay.innerHTML = `
+            <div>Fire Rate: ${(gameState.fireRate).toFixed(1)}x</div>
+            <div>Bouncy Shots: ${gameState.bouncyShots}</div>
+            <div>Guns: ${gameState.gunMode}</div>
+        `;
+        uiOverlay.appendChild(powerupDisplay);
+        
+        // Instructions
+        const instructions = document.createElement('div');
+        instructions.className = 'absolute bottom-4 right-4 text-white text-sm text-right';
+        instructions.innerHTML = `
+            <div>← → : Move</div>
+            <div>SPACE : Shoot</div>
+            <div>Catch powerups!</div>
+        `;
+        uiOverlay.appendChild(instructions);
+        
+        litechat.target.appendChild(container);
+
+        // Three.js scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a0033); // Deep purple
+        
+        const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+        camera.position.set(0, 0, 10);
+        
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(canvas.width, canvas.height);
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 5, 5);
+        scene.add(directionalLight);
+        
+        // Player ship
+        const playerGeometry = new THREE.ConeGeometry(0.5, 1.5, 4);
+        playerGeometry.rotateX(Math.PI / 2);
+        const playerMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x00ffff,
+            emissive: 0x004444,
+            shininess: 100
+        });
+        const player = new THREE.Mesh(playerGeometry, playerMaterial);
+        player.position.z = -5;
+        scene.add(player);
+        
+        // Game objects
+        const bullets = [];
+        const enemies = [];
+        const powerups = [];
+        const particles = [];
+        
+        // Create starfield background
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 1000;
+        const starPositions = new Float32Array(starCount * 3);
+        
+        for (let i = 0; i < starCount * 3; i += 3) {
+            starPositions[i] = (Math.random() - 0.5) * 100;
+            starPositions[i + 1] = (Math.random() - 0.5) * 100;
+            starPositions[i + 2] = (Math.random() - 0.5) * 100 - 10;
+        }
+        
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.1,
+            transparent: true,
+            opacity: 0.8
+        });
+        const starField = new THREE.Points(starGeometry, starMaterial);
+        scene.add(starField);
+        
+        // Input handling
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            // Prevent spacebar from scrolling page
+            if (e.key === ' ') {
+                e.preventDefault();
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Touch handling for mobile
+        let touchStartX = 0;
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            e.preventDefault();
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            const touchX = e.touches[0].clientX;
+            const diff = touchX - touchStartX;
+            
+            // Move player based on touch movement
+            player.position.x += diff * 0.01;
+            player.position.x = Math.max(-8, Math.min(8, player.position.x));
+            
+            touchStartX = touchX;
+            e.preventDefault();
+        });
+        
+        // Shooting
+        let lastShot = 0;
+        const shoot = () => {
+            const now = Date.now();
+            if (now - lastShot > 200 / gameState.fireRate) {
+                lastShot = now;
+                
+                const createBullet = (xOffset = 0, yOffset = 0, zOffset = 0) => {
+                    const bulletGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+                    const bulletMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0xff00ff,
+                        emissive: 0x440044
+                    });
+                    const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+                    bullet.position.set(
+                        player.position.x + xOffset,
+                        player.position.y + yOffset,
+                        player.position.z + zOffset
+                    );
+                    bullet.userData = { 
+                        bounces: gameState.bouncyShots,
+                        isBullet: true 
+                    };
+                    scene.add(bullet);
+                    bullets.push(bullet);
+                };
+                
+                // Different gun modes
+                switch (gameState.gunMode) {
+                    case 1: // Single shot
+                        createBullet();
+                        break;
+                    case 2: // Double shot
+                        createBullet(-0.3, 0, 0);
+                        createBullet(0.3, 0, 0);
+                        break;
+                    case 3: // Triple shot
+                        createBullet(-0.4, 0, 0);
+                        createBullet(0, 0, 0.2);
+                        createBullet(0.4, 0, 0);
+                        break;
+                }
+            }
+        };
+        
+        // Create enemy
+        const createEnemy = () => {
+            const enemyGeometry = new THREE.OctahedronGeometry(0.5);
+            const enemyMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xff5500,
+                emissive: 0x442200
+            });
+            const enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+            
+            // Random position at top of screen
+            enemy.position.set(
+                (Math.random() - 0.5) * 16,
+                10,
+                player.position.z - 5
+            );
+            
+            enemy.userData = { 
+                speed: 0.05 * gameState.enemySpeedMultiplier,
+                health: 1 + Math.floor(gameState.enemiesKilled / 20),
+                isEnemy: true 
+            };
+            
+            scene.add(enemy);
+            enemies.push(enemy);
+        };
+        
+        // Create powerup
+        const createPowerup = () => {
+            const types = ['fireRate', 'bouncy', 'guns', 'lives'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            let color, emissive;
+            switch (type) {
+                case 'fireRate': color = 0xffff00; emissive = 0x444400; break; // Yellow
+                case 'bouncy': color = 0x00ff00; emissive = 0x004400; break;   // Green
+                case 'guns': color = 0xff00ff; emissive = 0x440044; break;     // Magenta
+                case 'lives': color = 0xff0000; emissive = 0x440000; break;    // Red
+            }
+            
+            const powerupGeometry = new THREE.IcosahedronGeometry(0.3);
+            const powerupMaterial = new THREE.MeshPhongMaterial({ 
+                color, 
+                emissive,
+                shininess: 100
+            });
+            const powerup = new THREE.Mesh(powerupGeometry, powerupMaterial);
+            
+            powerup.position.set(
+                (Math.random() - 0.5) * 16,
+                10,
+                player.position.z - 5
+            );
+            
+            powerup.userData = { 
+                type,
+                isPowerup: true 
+            };
+            
+            scene.add(powerup);
+            powerups.push(powerup);
+        };
+        
+        // Create explosion particles
+        const createExplosion = (position) => {
+            for (let i = 0; i < 10; i++) {
+                const particleGeometry = new THREE.SphereGeometry(0.1, 4, 4);
+                const particleMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xff5500,
+                    emissive: 0x442200
+                });
+                const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+                
+                particle.position.copy(position);
+                particle.userData = {
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.2,
+                        (Math.random() - 0.5) * 0.2,
+                        (Math.random() - 0.5) * 0.2
+                    ),
+                    life: 30
+                };
+                
+                scene.add(particle);
+                particles.push(particle);
+            }
+        };
+        
+        // Game loop
+        let lastEnemySpawn = 0;
+        let lastPowerupSpawn = 0;
+        
+        const animate = () => {
+            requestAnimationFrame(animate);
+            
+            // Player movement
+            if (keys['ArrowLeft'] || keys['a']) {
+                player.position.x -= 0.2;
+            }
+            if (keys['ArrowRight'] || keys['d']) {
+                player.position.x += 0.2;
+            }
+            
+            // Keep player in bounds
+            player.position.x = Math.max(-8, Math.min(8, player.position.x));
+            
+            // Shooting
+            if (keys[' '] || keys['w'] || keys['ArrowUp']) {
+                shoot();
+            }
+            
+            // Spawn enemies
+            const now = Date.now();
+            if (now - lastEnemySpawn > 1000) {
+                lastEnemySpawn = now;
+                createEnemy();
+            }
+            
+            // Spawn powerups (less frequently)
+            if (now - lastPowerupSpawn > 5000) {
+                lastPowerupSpawn = now;
+                if (Math.random() > 0.7) { // 30% chance
+                    createPowerup();
+                }
+            }
+            
+            // Update bullets
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                bullet.position.y += 0.5;
+                
+                // Remove bullets that go off screen
+                if (bullet.position.y > 15) {
+                    scene.remove(bullet);
+                    bullets.splice(i, 1);
+                }
+            }
+            
+            // Update enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                enemy.position.y -= enemy.userData.speed;
+                enemy.rotation.x += 0.05;
+                enemy.rotation.y += 0.03;
+                
+                // Remove enemies that go off screen
+                if (enemy.position.y < -10) {
+                    scene.remove(enemy);
+                    enemies.splice(i, 1);
+                    // Lose a life when enemy escapes
+                    gameState.lives--;
+                    livesDisplay.textContent = `Lives: ${gameState.lives}`;
+                    
+                    if (gameState.lives <= 0) {
+                        // Game over
+                        const gameOver = document.createElement('div');
+                        gameOver.className = 'absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 text-white text-4xl font-bold';
+                        gameOver.textContent = 'GAME OVER';
+                        uiOverlay.appendChild(gameOver);
+                        return;
+                    }
+                }
+            }
+            
+            // Update powerups
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const powerup = powerups[i];
+                powerup.position.y -= 0.05;
+                powerup.rotation.x += 0.03;
+                powerup.rotation.y += 0.05;
+                
+                // Remove powerups that go off screen
+                if (powerup.position.y < -10) {
+                    scene.remove(powerup);
+                    powerups.splice(i, 1);
+                }
+            }
+            
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                particle.position.add(particle.userData.velocity);
+                particle.userData.life--;
+                
+                if (particle.userData.life <= 0) {
+                    scene.remove(particle);
+                    particles.splice(i, 1);
+                }
+            }
+            
+            // Collision detection - bullets vs enemies
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const enemy = enemies[j];
+                    
+                    const distance = bullet.position.distanceTo(enemy.position);
+                    if (distance < 0.8) {
+                        // Hit!
+                        createExplosion(enemy.position);
+                        
+                        // Remove enemy
+                        scene.remove(enemy);
+                        enemies.splice(j, 1);
+                        
+                        // Handle bouncy shots
+                        if (bullet.userData.bounces > 0) {
+                            bullet.userData.bounces--;
+                            // Keep bullet, change direction randomly
+                            bullet.position.y -= 1; // Move down a bit
+                        } else {
+                            // Remove bullet
+                            scene.remove(bullet);
+                            bullets.splice(i, 1);
+                        }
+                        
+                        // Update score
+                        gameState.score += 10;
+                        scoreDisplay.textContent = `Score: ${gameState.score}`;
+                        
+                        gameState.enemiesKilled++;
+                        
+                        // Increase difficulty every 10 kills
+                        if (gameState.enemiesKilled % 10 === 0) {
+                            gameState.enemySpeedMultiplier += 0.1;
+                        }
+                        
+                        break;
+                    }
+                }
+            }
+            
+            // Collision detection - player vs enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                const distance = player.position.distanceTo(enemy.position);
+                
+                if (distance < 1) {
+                    // Collision!
+                    createExplosion(enemy.position);
+                    scene.remove(enemy);
+                    enemies.splice(i, 1);
+                    
+                    gameState.lives--;
+                    livesDisplay.textContent = `Lives: ${gameState.lives}`;
+                    
+                    if (gameState.lives <= 0) {
+                        // Game over
+                        const gameOver = document.createElement('div');
+                        gameOver.className = 'absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 text-white text-4xl font-bold';
+                        gameOver.textContent = 'GAME OVER';
+                        uiOverlay.appendChild(gameOver);
+                        return;
+                    }
+                }
+            }
+            
+            // Collision detection - player vs powerups
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const powerup = powerups[i];
+                const distance = player.position.distanceTo(powerup.position);
+                
+                if (distance < 1) {
+                    // Collect powerup
+                    switch (powerup.userData.type) {
+                        case 'fireRate':
+                            gameState.fireRate += 0.1;
+                            gameState.powerups.fireRate++;
+                            break;
+                        case 'bouncy':
+                            gameState.bouncyShots++;
+                            gameState.powerups.bouncy++;
+                            break;
+                        case 'guns':
+                            gameState.gunMode = Math.min(3, gameState.gunMode + 1);
+                            gameState.powerups.guns++;
+                            break;
+                        case 'lives':
+                            gameState.lives++;
+                            gameState.powerups.lives++;
+                            livesDisplay.textContent = `Lives: ${gameState.lives}`;
+                            break;
+                    }
+                    
+                    // Update powerup display
+                    powerupDisplay.innerHTML = `
+                        <div>Fire Rate: ${(gameState.fireRate).toFixed(1)}x</div>
+                        <div>Bouncy Shots: ${gameState.bouncyShots}</div>
+                        <div>Guns: ${gameState.gunMode}</div>
+                    `;
+                    
+                    scene.remove(powerup);
+                    powerups.splice(i, 1);
+                }
+            }
+            
+            // Rotate player slightly for visual effect
+            player.rotation.z = Math.sin(Date.now() * 0.005) * 0.1;
+            
+            // Move starfield for parallax effect
+            starField.position.y -= 0.01;
+            if (starField.position.y < -50) {
+                starField.position.y = 50;
+            }
+            
+            renderer.render(scene, camera);
+        };
+
+        animate();
+        litechat.utils.log('info', '🎉 SUCCESS! Scroll Shooter is ready!');
+        
+    } catch (error) {
+        litechat.utils.log('error', '❌ FAILED to create game:', error.message);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+        errorDiv.textContent = `Error: ${error.message}`;
+        litechat.target.appendChild(errorDiv);
+    }
+}
+
+createScrollShooter();
+        } catch (error) {
+            console.error('Execution error:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'p-4 text-red-600 bg-red-100 border border-red-200 rounded-md';
+            errorDiv.textContent = 'Execution Error: ' + error.message;
+            document.getElementById('litechat-target').appendChild(errorDiv);
+        }
+        
+    </script>
+</body>
+</html>
